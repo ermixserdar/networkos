@@ -26,4 +26,4 @@ Include: app version (More > About shows 1.0.0), iOS version, and steps to repro
 English + Türkçe. Language follows system setting, changeable in More > Language.
 
 ---
-TODO before App Review: publish at https://networkos.app/support (URL referenced in `store.config.json`).
+Published at https://ermixserdar.github.io/networkos/support (URL referenced in `store.config.json`).

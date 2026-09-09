@@ -32,4 +32,4 @@ The app is a general productivity tool with no objectionable content (rated 4+).
 Questions: support@networkos.app
 
 ---
-TODO before App Review: publish this file at https://networkos.app/privacy (URL referenced in `store.config.json`).
+Published at https://ermixserdar.github.io/networkos/privacy (URL referenced in `store.config.json`).

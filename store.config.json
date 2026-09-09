@@ -13,9 +13,9 @@
         ],
         "releaseNotes": "Welcome to NetworkOS 1.0 — our first App Store release.\n\n• Private local-first CRM\n• Network graph, follow-ups, birthdays\n• Encrypted backup & Face ID lock\n• English + Türkçe\n\nThank you for trying v1 — reviews help a lot!",
         "promoText": "Private, local-first CRM. No account, no cloud — your people stay on your device.",
-        "privacyPolicyUrl": "https://networkos.app/privacy",
-        "supportUrl": "https://networkos.app/support",
-        "marketingUrl": "https://networkos.app"
+        "privacyPolicyUrl": "https://ermixserdar.github.io/networkos/privacy",
+        "supportUrl": "https://ermixserdar.github.io/networkos/support",
+        "marketingUrl": "https://ermixserdar.github.io/networkos"
       },
       "tr": {
         "title": "NetworkOS - Özel CRM",
@@ -26,9 +26,9 @@
         ],
         "releaseNotes": "NetworkOS 1.0'a hoş geldiniz — ilk App Store sürümü.\n\n• Özel, cihaz-içi CRM\n• Ağ grafiği, takip ve doğum günleri\n• Şifreli yedek ve Face ID kilidi\n• İngilizce + Türkçe",
         "promoText": "Özel, cihaz-içi CRM. Hesap yok, bulut yok — kişileriniz cihazınızda kalır.",
-        "privacyPolicyUrl": "https://networkos.app/privacy",
-        "supportUrl": "https://networkos.app/support",
-        "marketingUrl": "https://networkos.app"
+        "privacyPolicyUrl": "https://ermixserdar.github.io/networkos/privacy",
+        "supportUrl": "https://ermixserdar.github.io/networkos/support",
+        "marketingUrl": "https://ermixserdar.github.io/networkos"
       }
     },
     "advisory": {
@@ -57,7 +57,7 @@
       "lastName": "Ermix",
       "email": "serdar.cetink@gmail.com",
       "phone": "+90 TODO — replace with real number before submit",
-      "notes": "No login / no demo account needed — app is local-first and opens directly to onboarding (first/last name only, stored on device).\n\nHow to review:\n1. Enter any first name on onboarding, tap Start — no network call.\n2. Home > + adds a contact manually. Contacts import is OPTIONAL: only triggers iOS contacts permission when reviewer taps Import.\n3. Network tab: select a person to see local graph (depth 2). Needs 2+ contacts with a relationship to render edges — otherwise empty state is expected.\n4. Follow-up tab: set next_follow_up_at on a contact to see reminder row.\n5. More > Security: biometric lock is OPTIONAL; safe to skip on simulator.\n6. More > Backup: encrypted backup export is on-device; CSV export shows an unencrypted warning by design.\n\nPermissions:\n- NSContactsUsageDescription: optional import only.\n- NSFaceIDUsageDescription: optional app lock only.\n- No tracking, no ads, no third-party SDKs.\n\nSupport: support@networkos.app — privacy policy https://networkos.app/privacy"
+      "notes": "No login / no demo account needed — app is local-first and opens directly to onboarding (first/last name only, stored on device).\n\nHow to review:\n1. Enter any first name on onboarding, tap Start — no network call.\n2. Home > + adds a contact manually. Contacts import is OPTIONAL: only triggers iOS contacts permission when reviewer taps Import.\n3. Network tab: select a person to see local graph (depth 2). Needs 2+ contacts with a relationship to render edges — otherwise empty state is expected.\n4. Follow-up tab: set next_follow_up_at on a contact to see reminder row.\n5. More > Security: biometric lock is OPTIONAL; safe to skip on simulator.\n6. More > Backup: encrypted backup export is on-device; CSV export shows an unencrypted warning by design.\n\nPermissions:\n- NSContactsUsageDescription: optional import only.\n- NSFaceIDUsageDescription: optional app lock only.\n- No tracking, no ads, no third-party SDKs.\n\nSupport: support@networkos.app — privacy policy https://ermixserdar.github.io/networkos/privacy"
     }
   }
 }
