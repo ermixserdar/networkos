@@ -1,0 +1,9 @@
+import {randomUUID} from 'expo-crypto';
+export type SyncStatus='local'|'pending'|'synced'|'conflict';
+export type Contact={id:string;first_name:string;last_name?:string|null;display_name?:string|null;job_title?:string|null;company_id?:string|null;company_name?:string|null;email?:string|null;phone?:string|null;city?:string|null;country?:string|null;relationship_strength:number;importance:number;how_we_met?:string|null;notes?:string|null;last_contact_at?:number|null;next_follow_up_at?:number|null;favorite:number;created_at:number;updated_at:number;deleted_at?:number|null;sync_status:SyncStatus;version:number};
+export type Company={id:string;name:string;website?:string|null;industry?:string|null;city?:string|null;country?:string|null;description?:string|null;created_at:number;updated_at:number;deleted_at?:number|null;sync_status:SyncStatus;version:number};
+export type Relationship={id:string;contact_a_id:string;contact_b_id:string;relationship_type?:string|null;strength:number;context?:string|null;notes?:string|null;created_at:number;updated_at:number;deleted_at?:number|null;sync_status:SyncStatus;version:number};
+export type Interaction={id:string;contact_id:string;type:string;title?:string|null;description?:string|null;interaction_at:number;created_at:number;updated_at:number;deleted_at?:number|null;sync_status:SyncStatus;version:number};
+export type Commitment={id:string;contact_id:string;text:string;due_at?:number|null;completed_at?:number|null;created_at:number;updated_at:number;deleted_at?:number|null;display_name?:string|null;first_name?:string|null;last_name?:string|null};
+export type Event={id:string;name:string;event_at:number;location?:string|null;notes?:string|null;created_at:number;updated_at:number;deleted_at?:number|null;contact_count?:number};
+export const now=()=>Date.now(); export const uuid=()=>randomUUID();

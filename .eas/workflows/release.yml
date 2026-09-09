@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build-ios:
+    type: build
+    params:
+      platform: ios
+      profile: production
+
+  build-android:
+    type: build
+    params:
+      platform: android
+      profile: production
+
+  submit-ios:
+    type: submit
+    needs: [build-ios]
+    params:
+      platform: ios
+      profile: production
+
+  submit-android:
+    type: submit
+    needs: [build-android]
+    params:
+      platform: android
+      profile: production

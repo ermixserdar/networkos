@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "NetworkOS",
+    "slug": "networkos",
+    "version": "1.0.0",
+    "description": "A private, local-first network for remembering the people and relationships that matter.",
+    "icon": "./assets/icon.png",
+    "primaryColor": "#173F46",
+    "orientation": "portrait",
+    "scheme": "networkos",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      "expo-notifications",
+      "expo-sharing",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "NetworkOS needs access to import people from your phone contacts."
+        }
+      ],
+      "expo-font"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "accessesContactNotes": true,
+      "bundleIdentifier": "com.networkos.app",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "NetworkOS uses Face ID / Touch ID to unlock your private local network.",
+        "NSContactsUsageDescription": "NetworkOS needs access to import people from your phone contacts.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.networkos.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#122331"
+      },
+      "permissions": [
+        "android.permission.READ_CONTACTS"
+      ]
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "63e0e860-d1e3-4166-9fb7-65cbb7562457"
+      }
+    }
+  }
+}

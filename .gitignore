@@ -1,0 +1,24 @@
+node_modules/
+.expo/
+dist/
+.DS_Store
+*.log
+.env*
+!.env.example
+# EAS submit secrets — never commit
+google-service-account.json
+*.p8
+AuthKey*.p8
+.eas/credentials.json
+# Native build outputs
+ios/Pods/
+ios/build/
+ios/DerivedData/
+android/build/
+android/app/build/
+# Local tool caches
+.pnpm-store/
+.codebase-memory/
+.bug-hunter/
+.next/
+

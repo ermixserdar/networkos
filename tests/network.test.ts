@@ -1,0 +1,9 @@
+jest.mock('expo-crypto',()=>({randomUUID:()=>`test-${Math.random()}`}));jest.mock('../src/database/database',()=>({getDatabase:jest.fn()}));
+import {getDatabase} from '../src/database/database';import {NetworkService} from '../src/services/NetworkService';
+const db=()=>({getAllAsync:jest.fn(),runAsync:jest.fn()});
+describe('NetworkService',()=>{beforeEach(()=>jest.clearAllMocks());
+ test('returns the shortest path and terminates on cycles',async()=>{const mock=db();mock.getAllAsync.mockResolvedValue([{contact_a_id:'A',contact_b_id:'B'},{contact_a_id:'B',contact_b_id:'C'},{contact_a_id:'C',contact_b_id:'A'},{contact_a_id:'A',contact_b_id:'E'},{contact_a_id:'E',contact_b_id:'C'}]);(getDatabase as jest.Mock).mockResolvedValue(mock);await expect(NetworkService.shortestPath('A','C')).resolves.toEqual(['A','C']);});
+ test('respects maximum traversal depth',async()=>{const mock=db();mock.getAllAsync.mockResolvedValue([{contact_a_id:'A',contact_b_id:'B'},{contact_a_id:'B',contact_b_id:'C'},{contact_a_id:'C',contact_b_id:'D'}]);(getDatabase as jest.Mock).mockResolvedValue(mock);await expect(NetworkService.shortestPath('A','D',2)).resolves.toBeNull();await expect(NetworkService.shortestPath('A','D',3)).resolves.toEqual(['A','B','C','D']);});
+ test('blocks self relationships before touching storage',async()=>{const mock=db();(getDatabase as jest.Mock).mockResolvedValue(mock);await expect(NetworkService.upsert('A','A')).rejects.toThrow('themselves');expect(getDatabase).not.toHaveBeenCalled();});
+ test('classifies relationship health deterministically',()=>{expect(NetworkService.health({relationship_strength:5,importance:5,last_contact_at:Date.now()-100*86400000})).toBe('Dormant');expect(NetworkService.health({relationship_strength:4,importance:3,last_contact_at:Date.now()-70*86400000})).toBe('Cooling');expect(NetworkService.health({relationship_strength:4,importance:4,last_contact_at:Date.now()-10*86400000})).toBe('Healthy');});
+});

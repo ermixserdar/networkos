@@ -1,0 +1,63 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "copyright": "2026 NetworkOS",
+    "categories": ["PRODUCTIVITY", "BUSINESS"],
+    "info": {
+      "en-US": {
+        "title": "NetworkOS - Private CRM",
+        "subtitle": "Remember people that matter",
+        "description": "Your network. Organized.\n\nNetworkOS is a private, local-first CRM for the people who matter to you. No account. No server. Your data stays encrypted on your device.\n\nKEY FEATURES:\n• Private contacts — keep notes, job titles, birthdays, and relationship strength in one calm place\n• See the thread — visual network graph shows how every connection fits (depth 1–3)\n• Follow through — follow-ups, commitments, meetings, and birthday reminders so you never miss a move\n• Companies, tags & search — organize by company, tag, city, and importance; find anyone fast\n• Import from phone — optionally import from iOS Contacts (permission only used when you tap Import)\n• Encrypted backup — export an encrypted backup file and restore it later; CSV export is clearly marked unencrypted\n• App lock — optional Face ID / Touch ID lock; database key stays in Secure Enclave-backed SecureStore\n• English + Türkçe — full bilingual experience\n\nPRIVATE BY DESIGN\nLocal-first SQLite, encrypted on device. Contacts access is optional and never leaves your phone. No analytics SDK, no ads, no tracking.\n\nWHO IT'S FOR\nFounders, freelancers, salespeople, job-seekers, and anyone who wants a quiet, reliable memory for relationships.\n\nDownload NetworkOS and keep the people who matter close enough to act on.",
+        "keywords": [
+          "contacts,network,crm,relationships,followup,reminders,birthdays,private,localfirst,offline,tags"
+        ],
+        "releaseNotes": "Welcome to NetworkOS 1.0 — our first App Store release.\n\n• Private local-first CRM\n• Network graph, follow-ups, birthdays\n• Encrypted backup & Face ID lock\n• English + Türkçe\n\nThank you for trying v1 — reviews help a lot!",
+        "promoText": "Private, local-first CRM. No account, no cloud — your people stay on your device.",
+        "privacyPolicyUrl": "https://networkos.app/privacy",
+        "supportUrl": "https://networkos.app/support",
+        "marketingUrl": "https://networkos.app"
+      },
+      "tr": {
+        "title": "NetworkOS - Özel CRM",
+        "subtitle": "Önemli kişileri hatırla",
+        "description": "Ağınız. Düzenli.\n\nNetworkOS, önem verdiğiniz kişiler için özel, cihaz-içi (local-first) bir CRM'dir. Hesap yok. Sunucu yok. Verileriniz şifreli olarak cihazınızda kalır.\n\nÖNE ÇIKANLAR:\n• Özel kişiler — notlar, unvan, doğum günü ve ilişki gücünü tek sakin yerde tutun\n• Bağlantıyı görün — görsel ağ grafiği herkesin nasıl bağlandığını gösterir (derinlik 1–3)\n• Takipte kalın — takip hatırlatmaları, sözler, görüşmeler ve doğum günleri; hamlenizi kaçırmayın\n• Şirketler, etiketler ve arama — şirket, etiket, şehir ve öneme göre düzenleyin\n• Telefondan içe aktar — isterseniz iOS Kişiler'den içe aktarın (izin yalnızca İçe Aktar'a dokununca istenir)\n• Şifreli yedek — şifreli yedek dosyası alın, sonra geri yükleyin\n• Uygulama kilidi — isteğe bağlı Face ID / Touch ID kilidi\n• İngilizce + Türkçe — tam iki dilli deneyim\n\nGİZLİLİK ÖNCELİKLİ\nCihaz-içi şifreli SQLite. Kişiler erişimi isteğe bağlıdır ve telefonunuzdan çıkmaz. Reklam yok, takip yok.\n\nNetworkOS'u indirin ve önem verdiğiniz kişileri yakın tutun.",
+        "keywords": [
+          "kişiler,ağ,crm,ilişkiler,takip,hatırlatma,doğumgünü,gizli,çevrimdışı,rehber,bağlantı"
+        ],
+        "releaseNotes": "NetworkOS 1.0'a hoş geldiniz — ilk App Store sürümü.\n\n• Özel, cihaz-içi CRM\n• Ağ grafiği, takip ve doğum günleri\n• Şifreli yedek ve Face ID kilidi\n• İngilizce + Türkçe",
+        "promoText": "Özel, cihaz-içi CRM. Hesap yok, bulut yok — kişileriniz cihazınızda kalır.",
+        "privacyPolicyUrl": "https://networkos.app/privacy",
+        "supportUrl": "https://networkos.app/support",
+        "marketingUrl": "https://networkos.app"
+      }
+    },
+    "advisory": {
+      "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+      "contests": "NONE",
+      "gamblingSimulated": "NONE",
+      "horrorOrFearThemes": "NONE",
+      "matureOrSuggestiveThemes": "NONE",
+      "medicalOrTreatmentInformation": "NONE",
+      "profanityOrCrudeHumor": "NONE",
+      "sexualContentGraphicAndNudity": "NONE",
+      "sexualContentOrNudity": "NONE",
+      "violenceCartoonOrFantasy": "NONE",
+      "violenceRealistic": "NONE",
+      "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+      "gambling": false,
+      "unrestrictedWebAccess": false,
+      "seventeenPlus": false
+    },
+    "release": {
+      "automaticRelease": true,
+      "phasedRelease": true
+    },
+    "review": {
+      "firstName": "Serdar",
+      "lastName": "Ermix",
+      "email": "serdar.cetink@gmail.com",
+      "phone": "+90 TODO — replace with real number before submit",
+      "notes": "No login / no demo account needed — app is local-first and opens directly to onboarding (first/last name only, stored on device).\n\nHow to review:\n1. Enter any first name on onboarding, tap Start — no network call.\n2. Home > + adds a contact manually. Contacts import is OPTIONAL: only triggers iOS contacts permission when reviewer taps Import.\n3. Network tab: select a person to see local graph (depth 2). Needs 2+ contacts with a relationship to render edges — otherwise empty state is expected.\n4. Follow-up tab: set next_follow_up_at on a contact to see reminder row.\n5. More > Security: biometric lock is OPTIONAL; safe to skip on simulator.\n6. More > Backup: encrypted backup export is on-device; CSV export shows an unencrypted warning by design.\n\nPermissions:\n- NSContactsUsageDescription: optional import only.\n- NSFaceIDUsageDescription: optional app lock only.\n- No tracking, no ads, no third-party SDKs.\n\nSupport: support@networkos.app — privacy policy https://networkos.app/privacy"
+    }
+  }
+}
