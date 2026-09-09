@@ -24,7 +24,7 @@
       "expo-font"
     ],
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "accessesContactNotes": true,
       "bundleIdentifier": "com.networkos.app",
       "config": {
