@@ -1,4 +1,4 @@
-# NetworkOS – Detaylı Kullanım Kılavuzu (v1.0)
+# NetworkOS – Detaylı Kullanım Kılavuzu (v1.2)
 
 ## 1. NetworkOS nedir?
 
@@ -6,6 +6,7 @@ NetworkOS, kişilerinizi ve ilişkilerinizi hatırlamanıza yardımcı olan öze
 
 - **Hesap yok. Sunucu yok. Takip yok.**
 - İngilizce + Türkçe tam destek (telefon dilinize göre açılır, sonradan değiştirilebilir).
+- Açık, koyu ve sistem teması.
 
 ## 2. İlk açılış
 
@@ -13,7 +14,7 @@ NetworkOS, kişilerinizi ve ilişkilerinizi hatırlamanıza yardımcı olan öze
 2. Adınızı ve soyadınızı yazın (yalnızca cihazınızda saklanır).
 3. **"Ağınızı oluşturmaya başlayın"** düğmesine dokunun.
 
-Hepsi bu. Giriş ekranı, şifre veya e-posta yoktur.
+Hepsi bu. Giriş ekranı, şifre veya e-posta yoktur. Bu ekranı yalnızca bir kez görürsünüz.
 
 ## 3. Ekranlara genel bakış
 
@@ -22,70 +23,106 @@ Alttaki sekme çubuğunda 5 bölüm vardır:
 | Sekme | Ne işe yarar |
 |---|---|
 | **Ana Sayfa** | Günün özeti, bekleyen takipler, kişi ekleme |
-| **Kişiler** | Tüm kişiler, arama, profil görüntüleme |
-| **Ağ** | İlişkilerin görsel grafiği ve en kısa bağlantı yolu |
-| **Takip** | Takip tarihleri ve doğum günü hatırlatmaları |
-| **Daha Fazla** | Tüm ek özellikler, güvenlik, yedekleme, dil |
+| **Kişiler** | Tüm kişiler, arama, etikete göre filtreleme |
+| **Ağ** | İlişkilerin görsel grafiği, en kısa bağlantı yolu, ağ içgörüleri |
+| **Takip** | Gecikmiş / bugün / bu hafta / sonra kovalarında takipler |
+| **Daha Fazla** | Tüm ek özellikler, güvenlik, yedekleme, eşitleme, dil, tema |
 
 ## 4. Ana Sayfa
 
-- Üstteki kartta ağınızın özeti görünür: kişi sayısı ve **güçlü bağlantı** sayısı.
-- **Bekleyen takipler** listelenir; tarihi gelen kişilerin takibini buradan yaparsınız.
-- Sağ üstteki **+** düğmesiyle yeni kişi eklersiniz.
-- Karta dokunarak **Ağ** sekmesine geçersiniz.
+- Üstte üç sayaç: toplam kişi, bekleyen takip, güçlü bağlantı. Bu sayılar tüm veritabanından hesaplanır.
+- **Bugün** bölümünde tarihi gelmiş ve gecikmiş takipler listelenir.
+- **Son eklenenler** bölümünde en yeni kişiler görünür.
+- Sağ üstteki **+** düğmesi doğrudan kişi ekleme formunu açar.
 
 ## 5. Kişiler
 
 ### 5.1. Yeni kişi ekleme
 
-1. Ana Sayfa'daki **+** düğmesine veya Kişiler ekranındaki ekleme düğmesine dokunun.
-2. **Ad** (zorunlu), soyadı, unvan ve not alanlarını doldurun.
-3. Kaydedin.
+**+** düğmesine dokunun ve formu doldurun. Tüm alanlar isteğe bağlıdır, yalnızca **Ad** zorunludur:
 
-### 5.2. Rehberden aktarma
+- **Fotoğraf:** galeriden seçin veya çekin. Küçültülmüş bir kopya şifreli veritabanında saklanır; yedek ve eşitlemeyle birlikte taşınır.
+- **Temel bilgiler:** ad, soyad, unvan, şirket
+- **Nasıl ulaşılır:** e-posta, telefon, LinkedIn adresi, şehir, ülke
+- **Bağlam:** doğum günü, nasıl tanıştık, tanışma yeri, tanışma tarihi, notlar
+- **Yakınlık:** ilişki gücü (1–5), önem (1–5), favori, ritim, **gizli**
 
-1. **Daha Fazla → Rehberden aktar** bölümüne girin.
-2. **Rehbere izin ver** düğmesine dokunun (izin yalnızca bu ekranda, siz istediğinizde istenir).
-3. Listeden kişileri seçin (**Tümünü seç** / **Temizle** kısayolları vardır).
-4. **Seçilenleri aktar** düğmesine dokunun.
+Tarih alanlarında biçim **YYYY-AA-GG**'dir (örn. `1990-03-17`). Hatalı tarih girerseniz uygulama uyarır ve kaydetmez.
 
-Aktarılan kişiler telefonunuzdan çıkmaz; kopyaları yalnızca NetworkOS veritabanına yazılır. İzni reddederseniz kişileri tek tek el ile ekleyebilirsiniz.
+### 5.2. Kişiyi düzenleme ve silme
 
-### 5.3. Kişi profili
+Kişi profilinin sağ üstünde iki düğme vardır:
 
-Bir kişiye dokunduğunuzda profil açılır:
+- **Kalem** — aynı formu açar, tüm alanları değiştirebilirsiniz.
+- **Çöp kutusu** — kişiyi çöp kutusuna taşır. **Daha Fazla → Çöp kutusu**'ndan geri yükleyebilirsiniz; kalıcı silme oradaki ayrı bir işlemdir.
 
-- Notlar, unvan, doğum günü ve **ilişki gücü** bilgileri
-- **Etiket atama** (kişi profilindeki etiket bölümünden)
-- Takip tarihi belirleme (kişi Takip listesine düşer)
-- İlişki tanımlama (iki kişi arasındaki bağı ve gücünü kaydetme)
-- Görüşme/konuşma kaydı ekleme
+### 5.3. Rehberden aktarma
 
-### 5.4. Arama
+**Daha Fazla → Rehberden aktar** yolunu izleyin. İzin verdiğinizde kişiler listelenir; aktarmak istediklerinizi seçip **Seçilenleri aktar** düğmesine dokunun.
 
-Kişiler ekranındaki arama kutusuna ad yazarak ağınızda hızlıca bulursunuz. Şirket, etiket ve şehre göre düzenleme için ilgili bölümleri kullanın.
+Aktarım sırasında ad, unvan, şirket, e-posta, telefon, şehir, ülke, **doğum günü** ve **LinkedIn adresi** ayrı alanlara yerleştirilir. Kalan bilgiler (ikinci telefon, takma ad, akrabalık) notlara okunabilir satırlar olarak eklenir. Aynı telefon veya e-postaya sahip kişiler atlanır.
+
+### 5.4. Kişi profili
+
+Bir kişinin sayfasında şunlar bulunur:
+
+- İlişki durumu (Sağlıklı / Soğuyor / Uykuda), güç ve önem
+- **Ara / E-posta / LinkedIn** kısayolları
+- **Takip** bölümü: yarın, bir hafta, bir ay, 3 ay veya takibi kaldır
+- **Ritim** bölümü: 30 / 90 / 180 günde bir
+- **Doğum günü** kartı: kaç gün kaldığı ve kaç yaşına girdiği
+- **Sözler**: size borçlu olunanlar ve sizin borçlu olduklarınız
+- **Bağlantılar**: bu kişinin ağdaki diğer bağlantıları
+- **Bağlam** ve **Zaman çizelgesi**
+
+### 5.5. Arama ve filtreleme
+
+Kişiler sekmesindeki arama kutusu ad, soyad, e-posta, telefon, unvan, şehir, notlar ve şirket içinde arar. Türkçe karakterler normalleştirilir: `sükrü` yazarak `Şükrü` bulunur.
+
+Arama kutusunun altındaki etiket şeritinden bir etikete dokunarak listeyi daraltabilirsiniz.
 
 ## 6. Ağ (ilişki grafiği)
 
-Ağ sekmesi, bağlantılarınızı düğümler ve çizgilerle gösteren interaktif bir grafiktir.
+- Ekran ilk açıldığında grafiğin merkezinde **siz** varsınız; çevresinde tanıdığınız kişiler durur.
+- Bir kişiye dokunduğunuzda odak o kişiye geçer ve onun çevresi gösterilir.
+- Sağ üstteki hedef simgesi sizi tekrar merkeze alır.
+- İki parmakla yakınlaştırın, sürükleyerek gezinin.
 
-1. Alttaki listeden bir kişi seçin.
-2. Seçili kişinin çevresi grafikte belirir (2 derinlik, en fazla 150 düğüm). Çizgi kalınlığı ilişki gücünü gösterir.
-3. Grafiği parmaklarınızla **kaydırabilir ve yakınlaştırabilirsiniz**.
+### 6.1. En kısa yol bulma
 
-### En kısa yol bulma
+1. Bir kişiyi seçin.
+2. **Yol bul** düğmesine dokunun.
+3. Ulaşmak istediğiniz kişiyi seçin.
 
-1. Bir başlangıç kişisi seçin.
-2. Yol bulma modunda hedef kişiyi seçin.
-3. Uygulama iki kişi arasındaki en kısa bağlantı zincirini vurgular (6 dereceye kadar). Yol yoksa bilgi verilir.
+Uygulama altı dereceye kadar en kısa yolu bulur ve zinciri gösterir.
 
-Bu özellik özellikle **Tanıştırma motoru** ile birlikte kullanılır (bkz. 8.3).
+### 6.2. Geri sarma
+
+Grafiğin altındaki **Geri sar** şeridinden 3 ay, 1 yıl veya 3 yıl öncesini seçin. Ağınızın o tarihteki hâli gösterilir: ne büyüdü, ne karardı. Ek bir kayıt tutulmaz — her satırdaki oluşturulma tarihi zaten vardı.
+
+### 6.3. Ağ içgörüleri
+
+Sağ üstteki kıvılcım simgesi **Ağ içgörüleri** ekranını açar. Grafiğin şeklinden çıkarılan dört şey söylenir:
+
+- **Kaybetmeyi göze alamayacağınız kişiler** — bir kişi belirli insanlara ulaşmanızın tek yolu ise uyarır.
+- **Hiç buluşmayan kümeler** — birbirinden kopuk iki grup varsa, bir tanıştırmanın onları birleştireceğini söyler.
+- **Yoğunlaşma riski** — ağınızın büyük bölümü tek şirkette toplanmışsa bunu gösterir.
+- **Sessizleşiyor** — 90 günden uzun süredir temas kurmadığınız güçlü ilişkileri sayar.
+
+Her içgörünün altındaki **Kimler** düğmesi iddianın arkasındaki kişileri açar — bir sayı, üzerine dokunulabilir olmadığı sürece güvenilmez.
+
+Aynı ekranda **yapmaya değer tanıştırmalar** listelenir: birbirini tanımayan ama ortak bir bağlantısı, şirketi, etiketi veya şehri olan kişi çiftleri. **Tanıştırma yaz** düğmesi hazır mesajı paylaşım menüsüne verir; **Şimdi değil** o çifti listeden kaldırır.
 
 ## 7. Takip
 
-- Bir kişiye takip tarihi verdiğinizde burada listelenir; tarihi gelenler üstte görünür.
-- **Yaklaşan doğum günleri** (önümüzdeki 30 gün) ayrı bölümde gösterilir; telefon bildirimi olarak da hatırlatılır (bildirim izni verdiyseniz).
-- Takibi tamamladığınızda yeni bir sonraki adım vererek ilişkiyi canlı tutarsınız.
+Takipler dört kovaya ayrılır: **Gecikmiş**, **Bugün**, **Bu hafta**, **Sonra**. Her kovanın yanında kaç kişi olduğu yazar.
+
+Her satırda iki kısayol vardır:
+
+- **Bir hafta ertele** — takibi mevcut tarihinden bir hafta ileri atar.
+- **İletişim kuruldu** — son temas tarihini bugüne çeker. Kişide ritim tanımlıysa bir sonraki takip otomatik olarak planlanır.
+
+Takip tarihi verdiğinizde, bildirim izniniz varsa o gün için telefon bildirimi kurulur.
 
 ## 8. Daha Fazla menüsü
 
@@ -93,99 +130,148 @@ Bu özellik özellikle **Tanıştırma motoru** ile birlikte kullanılır (bkz. 
 
 Günün tek bakışta özeti:
 
-- **Bekleyen sözler** — verdiğiniz ve henüz yerine getirmediğiniz sözler
-- **Doğum günleri** — yaklaşan doğum günleri
-- **İlişki nabzı** — ağınızın genel durumu
+- **Bekleyen sözler** — vadesi gelen sözler (↑ sizin borcunuz, ↓ size verilen)
+- **Doğum günleri** — önümüzdeki 30 gün
+- **İlişki nabzı** — puanı düşen, ilgi bekleyen kişiler
+- **Hatırlıyor musunuz?** — uzun süredir görüşmediğiniz birinin fotoğrafı; adı gizli. Önce yüzü hatırlamayı deneyin, sonra **Göster**'e dokunun.
 
 ### 8.2. Görüşmeye hazırlan
 
-Önemli bir görüşmeden önce kullanın:
+İki yarısı vardır.
 
-1. **Kişi seçin** — görüşeceğiniz kişiyi bulun.
-2. **Kişi bağlamı** bölümünde kişiyle ilgili notları, geçmiş görüşmeleri ve açık sözleri görün.
-3. **Önerilen sorular** listesinden görüşmede sorabileceklerinizi seçin.
-4. Görüşme sırasında **not** alın ve **Görüşmeyi kaydet** düğmesiyle saklayın.
+**Takvim yarısı** — takvim izni verdiğinizde uygulama önümüzdeki 7 günün etkinliklerini okur ve katılımcı e-postalarını/adlarını kişilerinizle eşleştirir. Yalnızca ağınızdan biri olan görüşmeler listelenir.
+
+**Brifingler** anahtarını açarsanız, böyle bir görüşmeden 30 dakika önce telefon bildirimi alırsınız. Takvim yalnızca okunur; hiçbir şey telefondan çıkmaz ve takviminize hiçbir şey yazılmaz.
+
+**Hazırlık yarısı** — bir kişi seçtiğinizde bağlamı, o kişiye verdiğiniz açık sözler, son etkileşimleri ve önerilen sorular gösterilir. Görüşmeden sonra notlarınızı yapıştırıp **Yerel özet oluştur** düğmesine dokunun; uygulama cümleleri ayırır, söz gibi görünenleri işaretler ve etkileşim olarak kaydetmenizi sağlar. Bu işlem tamamen cihaz içinde, basit metin analiziyle yapılır.
 
 ### 8.3. Tanıştırma motoru
 
-Ağınızdaki iki kişiyi birbirine tanıştırmak için aralarındaki bağı bulun:
-
-1. **Başlangıç kişisini** seçin.
-2. **Hedef kişiyi** seçin.
-3. **Bağlantıyı bul** düğmesine dokunun — uygulama ortak tanıdıklar üzerinden zinciri gösterir.
+İki kişi seçip **Bağlantıyı bul** düğmesine dokunun; uygulama aradaki en kısa yolu bulur ve hazır bir tanıştırma mesajı yazar. Otomatik öneriler için **Ağ içgörüleri** ekranını kullanın.
 
 ### 8.4. Etkinlik modu
 
-Katıldığınız etkinlikte tanıştığınız kişileri toplu eklemek için:
-
 1. **Etkinlik adı**, tarih (YYYY-AA-GG) ve konum girin.
 2. **Etkinlik oluştur** düğmesine dokunun.
-3. Etkinlik sırasında eklediğiniz kişileri bu etkinlikle ilişkilendirin.
+3. Açılan etkinlik sayfasında katılımcıları işaretleyin.
+4. **Buradaki herkesi bağla** düğmesi, işaretlediğiniz her kişi arasında "etkinlikte tanıştık" bağlantısı kurar.
+
+Böylece bir konferans, ağ grafiğinizde gerçek bir kümeye dönüşür.
 
 ### 8.5. Güvenli paylaşım
 
-Bir kişinin iletişim bilgisini başkasıyla paylaşırken şifreli dosya hazırlayın:
+Kişileri başkasıyla paylaşırken:
 
-1. Paylaşılacak kişiyi seçin.
+1. Paylaşılacak kişileri işaretleyin.
 2. **Şifreli dosyayı paylaş** düğmesine dokunun.
-3. Hazırlanan dosyayı istediğiniz uygulamayla gönderin.
+3. Uygulama size **tek kullanımlık bir kod** verir. Dosyayı istediğiniz uygulamayla gönderin, **kodu ayrı bir kanaldan** iletin (örn. dosya e-posta ile, kod telefonla).
+
+Alıcı aynı ekranın alt kısmındaki **Kişileri al** bölümünden dosyayı seçer ve kodu girer.
+
+Kod olmadan dosya açılmaz — sizin tarafınızdan bile.
 
 ### 8.6. Profil
 
-Kendi profilinizi düzenleyin: ad, soyadı, unvan, şirket ve e-posta. Bu bilgiler tanıştırma ve paylaşım özelliklerinde kullanılır.
+Kendi profilinizi düzenleyin: ad, soyadı, unvan, şirket, e-posta, telefon. Bu bilgiler ağ grafiğinin merkezindeki "siz" düğümünü adlandırır.
 
 ### 8.7. Şirketler
 
 - Kişileri çalıştıkları şirketlere bağlayın.
 - **Şirket profili** sayfasında o şirketteki tüm kişileri bir arada görün.
-- Yeni şirket eklerken sektör ve konum bilgisi girebilirsiniz.
+- Şirketi düzenleyebilir veya silebilirsiniz; şirket silindiğinde kişiler kalır, yalnızca bağ kopar.
 
 ### 8.8. Sözler ve takipler
 
-Verdiğiniz sözleri takip edin:
+Verdiğiniz ve size verilen sözleri takip edin:
 
-1. **Yeni söz ekle** düğmesine dokunun.
-2. Kişiyi seçin, yapacağınız işi yazın, isterseniz son tarih (YYYY-AA-GG) verin.
+1. **Ben borçluyum** veya **Bana söz verildi** seçin.
+2. Kişiyi seçin, sözü yazın, isterseniz son tarih verin.
 3. **Sözü kaydet** düğmesine dokunun.
 
-Açık sözler **Bugünün odağı** ekranında da görünür.
+Ekranın üstündeki **Karşılıklılık** kartı dengeyi gösterir: kaç söz borcunuz var, kaç söz size verilmiş. Aynı denge her kişinin profilinde de görünür.
 
 ### 8.9. Güvenlik ve uygulama kilidi
 
-1. **Daha Fazla → Güvenlik ve uygulama kilidi** bölümüne girin.
-2. **Biyometrik kilidi etkinleştir** düğmesine dokunun (Face ID / Touch ID / parmak izi).
-3. Bundan sonra uygulama her açılışta kimlik doğrulaması ister.
+1. **Biyometrik kilidi aç** düğmesine dokunun (Face ID / Touch ID).
+2. **Tekrar kilitleme süresi** seçin: hemen, 1 dakika veya 5 dakika. Uygulama arka plana her geçtiğinde bu süre sonunda yeniden kilitlenir.
+3. **Uygulama değiştiricide içeriği gizle** açıkken, uygulama arka plana geçtiğinde ekran örtülür; görev değiştiricide kişileriniz görünmez.
 
-Kilit kapalı olsa bile veritabanı anahtarınız telefonun güvenli kasasında (SecureStore) saklanır. Simülatörde biyometri çalışmazsa bu normaldir; gerçek cihazda deneyin.
+Aynı ekranda **haftalık özet** anahtarı vardır. Açıkken kişi başına bildirim yerine haftada bir kez, pazar akşamı tek bir sakin özet alırsınız.
+
+Simülatörde biyometri çalışmazsa bu normaldir; gerçek cihazda deneyin.
 
 ### 8.10. Yedekleme ve geri yükleme
 
-Verilerinizin kopyasını kendinizin kontrol ettiği bir yerde saklayın. Üç işlem vardır:
+**Kurtarma anahtarı.** Ekranın üstünde 32 karakterlik bir kurtarma anahtarı vardır. Yedekleriniz telefonla değil **bu anahtarla** şifrelenir.
 
-- **Şifreli yedek dışa aktar:** Tüm ağınız şifreli bir dosyaya (`.networkos`) yazılır ve paylaşım menüsüyle istediğiniz yere kaydedersiniz. Dosyayı yalnızca sizin cihazınız açabilir.
-- **CSV olarak dışa aktar:** Kişiler düz metin tablo olarak kaydedilir. **Dikkat:** CSV şifreli değildir; dosyaya sahip herkes okuyabilir. Uygulama dışa aktarmadan önce sizi uyarır.
-- **Yedeği geri yükle:** Önceden aldığınız şifreli yedeği seçin; kayıtlar mevcut verilerinizle **birleştirilir**. Var olan kayıtlar silinmez.
+> **Bunu bir yere yazın.** Anahtar olmadan yedeğiniz yeni bir cihazda açılamaz ve kimse sizin için kurtaramaz.
 
-Telefon değiştirirken: eski telefonda şifreli yedek alın → dosyayı yeni telefona aktarın → yeni telefonda geri yükleyin.
+Üç işlem vardır:
 
-### 8.11. Etiketler
+- **Şifreli yedek dışa aktar:** Tüm ağınız `.networkos` dosyasına yazılır. Kurtarma anahtarınız olan herkes, hangi cihazda olursa olsun bu dosyayı açabilir.
+- **Kişileri CSV olarak dışa aktar:** Düz metin tablo. **Dikkat:** CSV şifreli değildir; dosyaya sahip herkes okuyabilir. Uygulama önce uyarır.
+- **Şifreli yedeği geri yükle:** Dosyayı seçin. Bu cihazın anahtarı farklıysa, yedeği alan cihazın kurtarma anahtarını alandaki kutuya yazın. Kayıtlar birleştirilir; her kaydın **yeni olan sürümü** korunur ve hiçbir şey silinmez.
 
-- Etiket oluşturun (örn. "üniversite", "müşteri", "aile").
-- Kişi profillerinden etiket atayın.
-- Kişileri etiketlere göre gruplayın ve arayın.
+Telefon değiştirirken: eski telefonda kurtarma anahtarını not edin → şifreli yedek alın → dosyayı yeni telefona aktarın → yeni telefonda anahtarı girip geri yükleyin.
 
-### 8.12. Dil değiştirme
+### 8.11. Cihazlar arası eşitleme
 
-**Daha Fazla** ekranının üstündeki **English / Türkçe** düğmeleriyle dili anında değiştirirsiniz. Varsayılan dil telefon ayarınızdan alınır.
+iPhone ve iPad'inizi (veya eski ve yeni telefonunuzu) sunucusuz eşitleyin:
+
+1. Birinci cihazda **Eşitleme paketi dışa aktar** düğmesine dokunun.
+2. Dosyayı AirDrop veya Dosyalar ile ikinci cihaza gönderin.
+3. İkinci cihazda **Eşitleme paketi içe aktar** düğmesine dokunun ve dosyayı seçin.
+
+Her iki cihazın **aynı kurtarma anahtarını** kullanması gerekir; ikinci cihazda anahtarı geri yükleme alanına bir kez girmeniz yeterlidir.
+
+Birleştirme her kaydın en yeni sürümünü tutar, iki yönde de çalışır ve aynı dosyayı iki kez içe aktarmak hiçbir şeyi bozmaz. Silmeler de aktarılır. Bulut, hesap veya sunucu yoktur.
+
+### 8.12. Gizli kasa
+
+Bir kişiyi düzenlerken **Gizli** etiketini seçin. O kişi listelerden, aramadan, grafikten, içgörülerden, hatırlatmalardan, CSV'den ve paylaşımlardan kaybolur.
+
+**Daha Fazla → Gizli kasa** ekranından Face ID ile açarsınız. Uygulama arka plana geçtiği anda kasa yeniden kilitlenir.
+
+Şifreli yedek ve eşitleme paketi gizli kişileri **taşır** (onlar da sizin verileriniz). Şifresiz CSV ve kişi paylaşımı kasa açık olsa bile **asla** taşımaz.
+
+### 8.13. Kopyaları birleştir
+
+**Daha Fazla → Kopyaları birleştir**: aynı telefon, e-posta veya adı paylaşan kişiler gruplanır. Korumak istediğinize dokunun; notlar, etkileşimler, sözler, etiketler ve bağlantılar ona taşınır, diğerleri çöp kutusuna gider. Koruduğunuz kaydın dolu alanları asla ezilmez; yalnızca boşları doldurulur.
+
+### 8.14. Çöp kutusu
+
+Silinen kişiler burada durur. **Geri yükle** kişiyi notları ve geçmişiyle birlikte geri getirir. **Kalıcı olarak sil** cihazdan gerçekten kaldıran tek işlemdir; geri alınamaz ve eşitlemeyle geri gelmez.
+
+### 8.15. Ağ hedefleri
+
+"Bu çeyrek 5 yatırımcıyla konuş" gibi bir hedef koyun. İlerleme elle girilmez — seçtiğiniz süre içinde kaydettiğiniz etkileşimlerden sayılır, isterseniz bir etiketle sınırlanır. Çubuğun altındaki **Kimler sayıldı** düğmesi sayının arkasındaki kişileri gösterir.
+
+### 8.16. Etiketler
+
+- Etiket oluşturun (örn. "üniversite", "müşteri", "aile"). Her etiketin yanında kaç kişide kullanıldığı yazar.
+- Kişi profilindeki **Etiketleri yönet** ekranından atayın veya kaldırın; aynı ekrandan yeni etiket de oluşturabilirsiniz.
+- Kişiler sekmesindeki etiket şeritinden listeyi filtreleyin.
+- Bir etiketi silmek onu tüm kişilerden kaldırır; kişiler kalır.
+
+### 8.17. Dil ve tema
+
+**Daha Fazla** ekranının üstünde iki grup düğme vardır:
+
+- **Dil:** English / Türkçe. Varsayılan telefon ayarınızdan gelir.
+- **Görünüm:** Sistem / Açık / Koyu.
 
 ## 9. Gizlilik ve güvenlik özeti
 
-- Tüm veriler cihazınızdaki şifreli SQLite veritabanındadır.
-- Rehber izni yalnızca **Rehberden aktar** ekranında, siz dokunduğunuzda istenir.
+- Tüm veriler cihazınızdaki **SQLCipher ile şifreli** SQLite veritabanındadır. Anahtar telefonun güvenli kasasındadır. Fotoğraflar da veritabanının içindedir, dosya sisteminde açıkta durmaz.
+- Cihazdan çıkan her dosya (yedek, paylaşım, eşitleme paketi) şifrelidir ve yalnızca sizin elinizdeki bir sırla açılır.
+- Rehber, takvim ve bildirim izinleri yalnızca ilgili ekranda, siz dokunduğunuzda istenir.
+- Takvim yalnızca okunur; takviminize hiçbir şey yazılmaz.
 - Face ID verisi cihazdan asla çıkmaz.
 - Bildirimler cihaz içinde planlanır; bildirim sunucusu kullanılmaz.
 - Reklam, takip ve üçüncü parti analiz araçları yoktur.
 - Uygulamayı silmek tüm verileri siler; bizde kopya bulunmaz.
+
+**Daha Fazla → NetworkOS hakkında** ekranı, kurulu sürümde şifrelemenin ve tam metin aramanın gerçekten açık olup olmadığını gösterir.
 
 Ayrıntılı metin: [Gizlilik Politikası](https://ermixserdar.github.io/networkos/privacy) · Yardım: [Destek](https://ermixserdar.github.io/networkos/support) · E-posta: support@networkos.app
 
@@ -195,7 +281,16 @@ Ayrıntılı metin: [Gizlilik Politikası](https://ermixserdar.github.io/network
 Hayır. Sunucu yok, hesap yok.
 
 **Verilerim nerede?**
-Telefonunuzda, şifreli veritabanında. Anahtar güvenli kasada (SecureStore/Keychain).
+Telefonunuzda, SQLCipher ile şifreli veritabanında. Anahtar güvenli kasada (Keychain).
+
+**Kurtarma anahtarımı kaybedersem ne olur?**
+Eski yedekleriniz açılamaz. Kimse kurtaramaz — sunucuda kopyası yoktur. Bu yüzden anahtarı bir yere yazın.
+
+**Telefonum kayboldu, yedeğim var. Ne yapmalıyım?**
+Yeni telefonda uygulamayı açın, **Yedekleme** ekranına girin, kurtarma anahtarınızı geri yükleme alanına yazın ve yedek dosyasını seçin.
+
+**Paylaştığım dosyayı karşı taraf açamıyor.**
+Tek kullanımlık kodu ilettiğinizden emin olun. Kod olmadan dosya açılmaz.
 
 **Rehber iznini reddettim, ne yapmalıyım?**
 Ayarlar → NetworkOS → Kişiler bölümünden izni açabilir veya kişileri el ile ekleyebilirsiniz.
@@ -206,16 +301,24 @@ Normaldir. Gerçek cihazda deneyin veya kilidi kapalı bırakın.
 **Her şeyi nasıl silerim?**
 Uygulamayı silin. Bulut kopyası olmadığı için her şey gider.
 
+**Gizli işaretlediğim kişiyi bulamıyorum.**
+Doğrusu bu. **Daha Fazla → Gizli kasa**'dan kasayı açın; uygulama arka plana geçene kadar görünür olur.
+
+**Yanlışlıkla birini sildim.**
+**Daha Fazla → Çöp kutusu → Geri yükle**. Kalıcı silme ayrı ve açıkça uyaran bir işlemdir.
+
 **Ağ grafiği boş görünüyor.**
-Grafik için en az 2 kişinin birbiriyle ilişkili olması gerekir. Önce kişiler arası ilişki tanımlayın.
+Merkezde siz varsınız; çevresinde en az bir kişi olması gerekir. Kişiler arası çizgiler için de en az iki kişi arasında ilişki tanımlamalısınız.
 
 **CSV ile şifreli yedek arasındaki fark nedir?**
-Şifreli yedek yalnızca sizin cihazınızda açılır. CSV düz metindir; herkese göndermeyin.
+Şifreli yedek yalnızca kurtarma anahtarıyla açılır. CSV düz metindir; herkese göndermeyin.
 
 ## 11. Günlük kullanım önerisi
 
 1. Sabah **Bugünün odağı** ekranına bakın (1 dakika).
-2. Tarihi gelen takipleri yapın, her birine bir sonraki adımı yazın.
-3. Yeni tanıştığınız kişiyi aynı gün ekleyin; ilk izlenim notunu yazın.
-4. Haftada bir **Ağ** sekmesine göz atın; ihmâl ettiğiniz güçlü bağlantıları fark edersiniz.
-5. Ayda bir **şifreli yedek** alın.
+2. **Takip** sekmesindeki gecikmiş kovasını boşaltın; her kişide **İletişim kuruldu** veya **Bir hafta ertele** kullanın.
+3. Önemli kişilere bir **ritim** verin (30/90/180 gün); sonraki takipler kendiliğinden planlansın.
+4. Yeni tanıştığınız kişiyi aynı gün ekleyin; ilk izlenim notunu yazın.
+5. Haftada bir **Ağ içgörüleri** ekranına göz atın; köprü kişileri ve yapmaya değer tanıştırmaları görün.
+6. Ayda bir **Kopyaları birleştir** ekranına bakın; aktarım ve eşitleme kopya biriktirir.
+7. Ayda bir **şifreli yedek** alın; kurtarma anahtarınızın hâlâ yazılı olduğundan emin olun.

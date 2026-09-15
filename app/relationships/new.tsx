@@ -1,1 +1,51 @@
-import {useState} from 'react';import {Pressable,ScrollView,Text,TextInput,View} from 'react-native';import {useLocalSearchParams,useRouter} from 'expo-router';import {useContacts} from '@/hooks/useContacts';import {RelationshipRepository} from '@/repositories/RelationshipRepository';import {colors} from '@/theme';const types=['friend','colleague','former_colleague','business','partner','investor','advisor','family','introduced_by','event','other'];export default function NewRelationship(){const {contactId}=useLocalSearchParams<{contactId:string}>();const {contacts}=useContacts();const [query,setQuery]=useState(''),[other,setOther]=useState<any>(null),[type,setType]=useState('friend'),[strength,setStrength]=useState(3);const router=useRouter();const choices=contacts.filter(x=>x.id!==contactId&&(x.display_name||x.first_name).toLowerCase().includes(query.toLowerCase())).slice(0,8);return <ScrollView style={{backgroundColor:colors.paper}} contentContainerStyle={{padding:22,paddingTop:62}}><Text style={{fontSize:32,fontWeight:'800',color:colors.ink}}>Add connection</Text><Text style={{color:colors.muted,marginTop:5,marginBottom:22}}>How does this person fit into the network?</Text><TextInput value={query} onChangeText={setQuery} placeholder="Find the other person" placeholderTextColor="#9BA3A3" style={{backgroundColor:colors.card,borderRadius:14,padding:16,fontSize:16,marginBottom:12}}/>{choices.map(c=><Pressable key={c.id} onPress={()=>setOther(c)} style={{padding:14,borderBottomWidth:1,borderBottomColor:colors.line,backgroundColor:other?.id===c.id?colors.sage:'transparent'}}><Text style={{fontWeight:'800',color:colors.ink}}>{c.display_name||`${c.first_name} ${c.last_name||''}`}</Text></Pressable>)}<Text style={{color:colors.muted,fontSize:12,fontWeight:'800',marginTop:22,marginBottom:9}}>RELATIONSHIP TYPE</Text><View style={{flexDirection:'row',flexWrap:'wrap',gap:8}}>{types.map(x=><Pressable key={x} onPress={()=>setType(x)} style={{backgroundColor:type===x?colors.teal:colors.card,borderRadius:16,paddingHorizontal:12,paddingVertical:9}}><Text style={{color:type===x?'#fff':colors.ink,fontSize:12,fontWeight:'700'}}>{x}</Text></Pressable>)}</View><Text style={{color:colors.muted,fontSize:12,fontWeight:'800',marginTop:22,marginBottom:9}}>STRENGTH · {strength}/5</Text><View style={{flexDirection:'row',gap:10}}>{[1,2,3,4,5].map(x=><Pressable key={x} onPress={()=>setStrength(x)} style={{width:42,height:42,borderRadius:21,backgroundColor:x<=strength?colors.coral:colors.card,alignItems:'center',justifyContent:'center'}}><Text style={{color:x<=strength?'#fff':colors.ink,fontWeight:'800'}}>{x}</Text></Pressable>)}</View><Pressable disabled={!other} onPress={async()=>{if(contactId&&other){await RelationshipRepository.create(contactId,other.id,type,strength);router.back()}}} style={{backgroundColor:other?colors.coral:'#C8C8C1',borderRadius:16,padding:18,marginTop:28}}><Text style={{color:'#fff',fontWeight:'800',textAlign:'center'}}>Save connection</Text></Pressable></ScrollView>}
+import {useState} from 'react';
+import {Pressable,Text,View} from 'react-native';
+import {useLocalSearchParams,useRouter} from 'expo-router';
+import {Contact} from '@/types';
+import {useContacts} from '@/hooks/useContacts';
+import {RelationshipRepository} from '@/repositories/RelationshipRepository';
+import {contactName} from '@/components/ContactRow';
+import {BackLink,Btn,Chip,Field,Rating,ScreenScroll,SectionLabel,Subtitle,Title} from '@/components/ui';
+import {HIT,useTheme} from '@/theme';
+import {useTranslation} from '@/i18n';
+
+const TYPES=['friend','colleague','former_colleague','business','partner','investor','advisor','family','introduced_by','event','other'] as const;
+
+export default function NewRelationship(){
+ const {contactId}=useLocalSearchParams<{contactId:string}>();
+ const [query,setQuery]=useState('');
+ const {contacts}=useContacts({q:query,pageSize:10});
+ const [other,setOther]=useState<Contact|null>(null);
+ const [type,setType]=useState<string>('friend');
+ const [strength,setStrength]=useState(3);
+ const [saving,setSaving]=useState(false);
+ const router=useRouter();
+ const {t}=useTranslation();
+ const {c}=useTheme();
+
+ const choices=contacts.filter(x=>x.id!==contactId).slice(0,8);
+ const save=async()=>{
+  if(!contactId||!other)return;
+  setSaving(true);
+  try{await RelationshipRepository.create(contactId,other.id,type,strength);router.back()}
+  finally{setSaving(false)}
+ };
+
+ return <ScreenScroll>
+  <BackLink label={t('backContact')} onPress={()=>router.back()}/>
+  <Title>{t('addConnection')}</Title>
+  <Subtitle>{t('relationshipSubtitle')}</Subtitle>
+  <Field label={t('findOther')} value={query} onChangeText={setQuery} autoCapitalize="words"/>
+  {choices.map(contact=><Pressable key={contact.id} accessibilityRole="button" accessibilityState={{selected:other?.id===contact.id}} accessibilityLabel={contactName(contact)} onPress={()=>setOther(contact)}
+   style={{minHeight:HIT,justifyContent:'center',padding:14,borderBottomWidth:1,borderBottomColor:c.line,backgroundColor:other?.id===contact.id?c.sage:'transparent'}}>
+   <Text style={{fontWeight:'800',color:c.ink}}>{contactName(contact)}</Text>
+  </Pressable>)}
+
+  <SectionLabel style={{marginTop:22}}>{t('relationshipTypeLabel')}</SectionLabel>
+  <View style={{flexDirection:'row',flexWrap:'wrap',gap:8,marginBottom:22}}>
+   {TYPES.map(x=><Chip key={x} label={t(`rel_${x}` as never)} selected={type===x} onPress={()=>setType(x)}/>)}
+  </View>
+  <Rating label={t('connectionStrength',strength).replace(/ · .*/,'')} value={strength} onChange={setStrength}/>
+  <Btn label={t('saveConnection')} busy={saving} disabled={!other} onPress={()=>void save()} style={{marginTop:10}}/>
+ </ScreenScroll>;
+}

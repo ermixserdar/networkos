@@ -1,2 +1,59 @@
-import {useEffect,useState} from 'react';import {Alert,FlatList,Pressable,Text,TextInput,View} from 'react-native';import {useRouter} from 'expo-router';import {colors,shadow} from '@/theme';import {EventRepository} from '@/repositories/EventRepository';import {Event} from '@/types';import {useTranslation} from '@/i18n';
-export default function Events(){const router=useRouter();const {language}=useTranslation();const tr=language==='tr';const [items,setItems]=useState<Event[]>([]),[name,setName]=useState(''),[date,setDate]=useState(''),[location,setLocation]=useState('');const copy=tr?{title:'Etkinlik modu',subtitle:'Toplantı, konferans ve buluşmalar için geçici ağlar oluşturun.',name:'Etkinlik adı',date:'Tarih (YYYY-AA-GG)',location:'Konum',save:'Etkinlik oluştur',empty:'Henüz etkinlik yok.',back:'‹ Daha Fazla',required:'Etkinlik adı ve geçerli tarih gerekli',done:'Etkinlik oluşturuldu'}:{title:'Event mode',subtitle:'Create temporary networks for meetings, conferences and gatherings.',name:'Event name',date:'Date (YYYY-MM-DD)',location:'Location',save:'Create event',empty:'No events yet.',back:'‹ More',required:'Event name and valid date are required',done:'Event created'};useEffect(()=>{void EventRepository.list().then(setItems)},[]);const save=async()=>{const eventAt=Date.parse(`${date}T12:00:00`);if(!name.trim()||!Number.isFinite(eventAt)){Alert.alert(copy.required);return}await EventRepository.create(name,eventAt,location);setName('');setDate('');setLocation('');setItems(await EventRepository.list());Alert.alert(copy.done)};return <View style={{flex:1,backgroundColor:colors.paper,padding:22,paddingTop:58}}><Pressable onPress={()=>router.back()}><Text style={{color:colors.ink,fontWeight:'800'}}>{copy.back}</Text></Pressable><Text style={{fontSize:32,fontWeight:'800',color:colors.ink,marginTop:27}}>{copy.title}</Text><Text style={{color:colors.muted,fontSize:16,lineHeight:23,marginTop:7,marginBottom:20}}>{copy.subtitle}</Text><View style={{backgroundColor:colors.card,borderRadius:18,padding:16,...shadow}}><TextInput value={name} onChangeText={setName} placeholder={copy.name} placeholderTextColor="#9BA3A3" style={{backgroundColor:colors.paper,borderRadius:13,padding:14,fontSize:16,marginBottom:9}}/><TextInput value={date} onChangeText={setDate} placeholder={copy.date} placeholderTextColor="#9BA3A3" style={{backgroundColor:colors.paper,borderRadius:13,padding:14,fontSize:16,marginBottom:9}}/><TextInput value={location} onChangeText={setLocation} placeholder={copy.location} placeholderTextColor="#9BA3A3" style={{backgroundColor:colors.paper,borderRadius:13,padding:14,fontSize:16}}/><Pressable onPress={()=>void save()} style={{backgroundColor:colors.coral,borderRadius:14,padding:16,marginTop:12}}><Text style={{color:'#fff',fontWeight:'800',textAlign:'center'}}>{copy.save}</Text></Pressable></View><FlatList data={items} keyExtractor={x=>x.id} contentContainerStyle={{paddingTop:22}} ListEmptyComponent={<Text style={{color:colors.muted,textAlign:'center',marginTop:22}}>{copy.empty}</Text>} renderItem={({item})=><View style={{backgroundColor:colors.card,borderRadius:16,padding:16,marginBottom:9}}><Text style={{color:colors.ink,fontSize:17,fontWeight:'800'}}>{item.name}</Text><Text style={{color:colors.muted,marginTop:5}}>{new Date(item.event_at).toLocaleDateString()} {item.location?`· ${item.location}`:''}</Text><Text style={{color:colors.coral,fontWeight:'800',marginTop:6}}>{item.contact_count||0} {tr?'kişi':'people'}</Text></View>}/></View>}
+import {useCallback,useState} from 'react';
+import {Alert,FlatList,Pressable,Text,View} from 'react-native';
+import {useRouter} from 'expo-router';
+import {Ionicons} from '@expo/vector-icons';
+import {Event} from '@/types';
+import {EventRepository} from '@/repositories/EventRepository';
+import {BackLink,Btn,Card,Empty,Field,Screen,Subtitle,Title,useFocusRefresh} from '@/components/ui';
+import {HIT,radius,useTheme} from '@/theme';
+import {formatDate,parseDateInput} from '@/utils/format';
+import {useTranslation} from '@/i18n';
+
+export default function Events(){
+ const router=useRouter();
+ const {t,language}=useTranslation();
+ const {c}=useTheme();
+ const [items,setItems]=useState<Event[]>([]);
+ const [name,setName]=useState('');
+ const [date,setDate]=useState('');
+ const [location,setLocation]=useState('');
+ const [saving,setSaving]=useState(false);
+
+ const load=useCallback(async()=>{setItems(await EventRepository.list())},[]);
+ useFocusRefresh(load);
+
+ const save=async()=>{
+  const eventAt=parseDateInput(date);
+  if(!name.trim()||eventAt===null){Alert.alert(t('eventRequired'));return}
+  setSaving(true);
+  try{
+   const id=await EventRepository.create(name,eventAt,location);
+   setName('');setDate('');setLocation('');
+   await load();
+   router.push(`/events/${id}` as never);
+  }finally{setSaving(false)}
+ };
+
+ return <Screen>
+  <BackLink label={t('backMore')} onPress={()=>router.back()}/>
+  <Title>{t('eventMode')}</Title>
+  <Subtitle>{t('eventModeSubtitle')}</Subtitle>
+  <Card>
+   <Field label={t('eventName')} value={name} onChangeText={setName}/>
+   <Field label={t('eventDate')} hint={t('dateHint')} value={date} onChangeText={setDate} keyboardType="numbers-and-punctuation" autoCapitalize="none"/>
+   <Field label={t('eventLocation')} value={location} onChangeText={setLocation}/>
+   <Btn label={t('createEvent')} busy={saving} onPress={()=>void save()}/>
+  </Card>
+  <FlatList data={items} keyExtractor={x=>x.id} contentContainerStyle={{paddingTop:20,paddingBottom:30}}
+   ListEmptyComponent={<Empty>{t('noEvents')}</Empty>}
+   renderItem={({item})=><Pressable accessibilityRole="button" accessibilityLabel={item.name} onPress={()=>router.push(`/events/${item.id}` as never)}
+    style={{backgroundColor:c.card,borderRadius:radius.md,padding:16,marginBottom:9,minHeight:HIT+20,flexDirection:'row',alignItems:'center'}}>
+    <View style={{flex:1}}>
+     <Text style={{color:c.ink,fontSize:17,fontWeight:'800'}}>{item.name}</Text>
+     <Text style={{color:c.muted,marginTop:5}}>{formatDate(item.event_at,language)}{item.location?` · ${item.location}`:''}</Text>
+     <Text style={{color:c.coral,fontWeight:'800',marginTop:6}}>{t('peopleAtEvent',item.contact_count??0)}</Text>
+    </View>
+    <Ionicons name="chevron-forward" size={18} color={c.muted}/>
+   </Pressable>}/>
+ </Screen>;
+}

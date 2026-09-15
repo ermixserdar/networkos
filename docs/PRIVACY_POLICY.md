@@ -8,7 +8,7 @@
 All content you enter — contacts, notes, relationships, follow-ups, commitments, meetings, companies, tags, birthdays — is stored in an encrypted SQLite database **on your device only**.
 
 ## 2. Device permissions (all optional)
-- **Contacts (`NSContactsUsageDescription`):** Used only when you tap Import, to copy people from iOS Contacts into your local NetworkOS database. Nothing leaves the phone. You can deny permission and enter contacts manually.
+- **Contacts (`NSContactsUsageDescription`):** Used when you tap Import to copy people from iOS Contacts into your local NetworkOS database, and — only if you switch it on under More → Phone book sync — to keep the people you already imported up to date by filling in fields you left blank. That sync is off until you enable it, reads your address book without ever writing to it, and adds nobody on its own. Nothing leaves the phone either way. You can deny permission and enter contacts manually.
 - **Face ID / Touch ID (`NSFaceIDUsageDescription`):** Used only if you enable App Lock in More > Security. Authentication happens on-device via Secure Enclave. No biometric data ever leaves the device.
 - **Notifications:** If enabled, reminders (follow-ups, birthdays) are scheduled locally with `expo-notifications`. No push server is used.
 - **Files / Share sheet:** Backup export writes a file to your device storage only when you explicitly tap Export.

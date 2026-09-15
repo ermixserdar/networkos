@@ -1,2 +1,101 @@
-import {useEffect,useState} from 'react';import {Alert,FlatList,Pressable,Text,TextInput,View} from 'react-native';import {useRouter} from 'expo-router';import {colors,shadow} from '@/theme';import {CommitmentRepository} from '@/repositories/CommitmentRepository';import {ContactRepository} from '@/repositories/ContactRepository';import {Commitment,Contact} from '@/types';import {useTranslation} from '@/i18n';
-export default function Commitments(){const router=useRouter();const {language}=useTranslation();const tr=language==='tr';const [items,setItems]=useState<Commitment[]>([]),[contacts,setContacts]=useState<Contact[]>([]),[contactId,setContactId]=useState(''),[text,setText]=useState(''),[due,setDue]=useState(''),[loading,setLoading]=useState(false);const copy=tr?{title:'Sözler ve takipler',subtitle:'Verdiğiniz sözleri unutmayın; ilişkiler güvenle ilerlesin.',add:'Yeni söz ekle',person:'Kişi seçin',promise:'Ne yapacaksınız?',date:'Son tarih (YYYY-AA-GG, isteğe bağlı)',save:'Sözü kaydet',empty:'Henüz kayıtlı söz yok.',back:'‹ Daha Fazla',required:'Kişi ve söz alanları gerekli',done:'Söz kaydedildi'}:{title:'Promises & follow-through',subtitle:'Keep the promises that move relationships forward.',add:'Add a promise',person:'Choose a person',promise:'What will you do?',date:'Due date (YYYY-MM-DD, optional)',save:'Save promise',empty:'No promises yet.',back:'‹ More',required:'Choose a person and enter a promise',done:'Promise saved'};const refresh=async()=>{setItems(await CommitmentRepository.list())};useEffect(()=>{void Promise.all([refresh(),ContactRepository.list().then(setContacts)])},[]);const save=async()=>{const timestamp=due.trim()?Date.parse(`${due.trim()}T12:00:00`):null;if(!contactId||!text.trim()||(due.trim()&&!Number.isFinite(timestamp))){Alert.alert(copy.required);return}setLoading(true);try{await CommitmentRepository.create(contactId,text,timestamp);setText('');setDue('');await refresh();Alert.alert(copy.done)}finally{setLoading(false)}};return <View style={{flex:1,backgroundColor:colors.paper,padding:22,paddingTop:58}}><Pressable onPress={()=>router.back()}><Text style={{color:colors.ink,fontWeight:'800'}}>{copy.back}</Text></Pressable><Text style={{fontSize:32,fontWeight:'800',color:colors.ink,marginTop:27}}>{copy.title}</Text><Text style={{color:colors.muted,fontSize:16,lineHeight:23,marginTop:7,marginBottom:20}}>{copy.subtitle}</Text><View style={{backgroundColor:colors.card,borderRadius:18,padding:16,...shadow}}><Text style={{fontSize:13,fontWeight:'800',color:colors.muted,marginBottom:8}}>{copy.add.toUpperCase()}</Text><View style={{flexDirection:'row',flexWrap:'wrap',gap:7,marginBottom:10}}>{contacts.slice(0,8).map(c=><Pressable key={c.id} onPress={()=>setContactId(c.id)} style={{backgroundColor:contactId===c.id?colors.teal:colors.sage,borderRadius:14,paddingHorizontal:11,paddingVertical:8}}><Text style={{color:contactId===c.id?'#fff':colors.ink,fontWeight:'700'}}>{c.display_name||`${c.first_name} ${c.last_name||''}`}</Text></Pressable>)}{!contacts.length&&<Text style={{color:colors.muted}}>{copy.person}</Text>}</View><TextInput value={text} onChangeText={setText} placeholder={copy.promise} placeholderTextColor="#9BA3A3" style={{backgroundColor:colors.paper,borderRadius:13,padding:14,fontSize:16,marginBottom:9}}/><TextInput value={due} onChangeText={setDue} placeholder={copy.date} placeholderTextColor="#9BA3A3" keyboardType="numbers-and-punctuation" style={{backgroundColor:colors.paper,borderRadius:13,padding:14,fontSize:16}}/><Pressable disabled={loading} onPress={()=>void save()} style={{backgroundColor:colors.coral,borderRadius:14,padding:16,marginTop:12}}><Text style={{color:'#fff',fontWeight:'800',textAlign:'center'}}>{copy.save}</Text></Pressable></View><FlatList data={items} keyExtractor={x=>x.id} contentContainerStyle={{paddingTop:22,paddingBottom:30}} ListEmptyComponent={<Text style={{color:colors.muted,textAlign:'center',marginTop:22}}>{copy.empty}</Text>} renderItem={({item})=><View style={{backgroundColor:colors.card,borderRadius:16,padding:16,marginBottom:9,flexDirection:'row',alignItems:'center'}}><Pressable onPress={async()=>{await CommitmentRepository.complete(item.id,!item.completed_at);await refresh()}} style={{width:25,height:25,borderRadius:8,borderWidth:2,borderColor:item.completed_at?colors.teal:colors.line,backgroundColor:item.completed_at?colors.teal:'transparent',alignItems:'center',justifyContent:'center'}}>{item.completed_at&&<Text style={{color:'#fff',fontWeight:'900'}}>✓</Text>}</Pressable><View style={{marginLeft:12,flex:1}}><Text style={{color:item.completed_at?colors.muted:colors.ink,fontWeight:'800',textDecorationLine:item.completed_at?'line-through':'none'}}>{item.text}</Text><Text style={{color:colors.muted,fontSize:12,marginTop:4}}>{item.display_name||`${item.first_name||''} ${item.last_name||''}`} {item.due_at?`· ${new Date(item.due_at).toLocaleDateString()}`:''}</Text></View></View>}/></View>}
+import {useCallback,useEffect,useState} from 'react';
+import {Alert,FlatList,Pressable,Text,View} from 'react-native';
+import {useLocalSearchParams,useRouter} from 'expo-router';
+import {Ionicons} from '@expo/vector-icons';
+import {Commitment,CommitmentDirection,Contact} from '@/types';
+import {CommitmentRepository} from '@/repositories/CommitmentRepository';
+import {ContactRepository} from '@/repositories/ContactRepository';
+import {ContactSelect} from '@/components/ContactSelect';
+import {BackLink,Btn,Card,Chip,Empty,Field,Screen,Subtitle,Title,useFocusRefresh} from '@/components/ui';
+import {HIT,hitSlop,radius,useTheme} from '@/theme';
+import {formatDate,parseDateInput} from '@/utils/format';
+import {useTranslation} from '@/i18n';
+
+export default function Commitments(){
+ const {contactId:initialContact}=useLocalSearchParams<{contactId?:string}>();
+ const router=useRouter();
+ const {t,language}=useTranslation();
+ const {c}=useTheme();
+ const [items,setItems]=useState<Commitment[]>([]);
+ const [balance,setBalance]=useState({mine:0,theirs:0});
+ const [contact,setContact]=useState<Contact|null>(null);
+ const [text,setText]=useState('');
+ const [due,setDue]=useState('');
+ const [direction,setDirection]=useState<CommitmentDirection>('owed_by_me');
+ const [filter,setFilter]=useState<CommitmentDirection|undefined>();
+ const [saving,setSaving]=useState(false);
+
+ const load=useCallback(async()=>{
+  const [rows,totals]=await Promise.all([CommitmentRepository.list({direction:filter}),CommitmentRepository.balance()]);
+  setItems(rows);setBalance(totals);
+ },[filter]);
+ useFocusRefresh(load);
+
+ // Arriving from a contact's "add a promise" button should land with that person already chosen.
+ useEffect(()=>{
+  if(!initialContact)return;
+  void ContactRepository.get(initialContact).then(preset=>setContact(current=>current??preset??null));
+ },[initialContact]);
+
+ const save=async()=>{
+  const timestamp=due.trim()?parseDateInput(due):null;
+  if(!contact||!text.trim()||(due.trim()&&timestamp===null)){Alert.alert(t('promiseRequired'));return}
+  setSaving(true);
+  try{
+   await CommitmentRepository.create(contact.id,text,timestamp,direction);
+   setText('');setDue('');
+   await load();
+  }finally{setSaving(false)}
+ };
+
+ return <Screen>
+  <BackLink label={t('backMore')} onPress={()=>router.back()}/>
+  <Title>{t('promises')}</Title>
+  <Subtitle>{t('promisesSubtitle')}</Subtitle>
+
+  <Card tone="sage" style={{marginBottom:14}}>
+   <Text style={{fontSize:12,fontWeight:'900',color:c.teal}}>{t('reciprocityTitle')}</Text>
+   <Text style={{color:c.ink,fontWeight:'800',marginTop:6}}>{balance.mine||balance.theirs?t('reciprocityBody',balance.mine,balance.theirs):t('balanceEven')}</Text>
+  </Card>
+
+  <Card>
+   <Text style={{fontSize:13,fontWeight:'800',color:c.muted,marginBottom:10}}>{t('addPromise').toUpperCase()}</Text>
+   <View style={{flexDirection:'row',gap:8,marginBottom:12}}>
+    <Chip label={t('owedByMe')} selected={direction==='owed_by_me'} onPress={()=>setDirection('owed_by_me')}/>
+    <Chip label={t('owedToMe')} selected={direction==='owed_to_me'} onPress={()=>setDirection('owed_to_me')}/>
+   </View>
+   <ContactSelect label={t('choosePersonPrompt')} value={contact} onChange={setContact}/>
+   <Field label={t('promiseText')} value={text} onChangeText={setText}/>
+   <Field label={t('dueDate')} hint={t('dateHint')} value={due} onChangeText={setDue} keyboardType="numbers-and-punctuation" autoCapitalize="none"/>
+   <Btn label={t('savePromise')} busy={saving} onPress={()=>void save()}/>
+  </Card>
+
+  <View style={{flexDirection:'row',gap:8,marginTop:18}}>
+   <Chip label={t('filterAll')} selected={!filter} onPress={()=>setFilter(undefined)}/>
+   <Chip label={t('owedByMe')} selected={filter==='owed_by_me'} onPress={()=>setFilter('owed_by_me')}/>
+   <Chip label={t('owedToMe')} selected={filter==='owed_to_me'} onPress={()=>setFilter('owed_to_me')}/>
+  </View>
+
+  <FlatList data={items} keyExtractor={x=>x.id} contentContainerStyle={{paddingTop:16,paddingBottom:30}}
+   ListEmptyComponent={<Empty>{t('noPromises')}</Empty>}
+   renderItem={({item})=><View style={{backgroundColor:c.card,borderRadius:radius.md,padding:16,marginBottom:9,flexDirection:'row',alignItems:'center',minHeight:HIT+16}}>
+    <Pressable accessibilityRole="checkbox" accessibilityState={{checked:Boolean(item.completed_at)}} accessibilityLabel={item.text} hitSlop={hitSlop}
+     onPress={async()=>{await CommitmentRepository.complete(item.id,!item.completed_at);await load()}}
+     style={{width:26,height:26,borderRadius:8,borderWidth:2,borderColor:item.completed_at?c.teal:c.line,backgroundColor:item.completed_at?c.teal:'transparent',alignItems:'center',justifyContent:'center'}}>
+     {item.completed_at?<Ionicons name="checkmark" size={16} color="#fff"/>:null}
+    </Pressable>
+    <View style={{marginLeft:12,flex:1}}>
+     <Text style={{color:item.completed_at?c.muted:c.ink,fontWeight:'800',textDecorationLine:item.completed_at?'line-through':'none'}}>
+      {item.direction==='owed_by_me'?'↑':'↓'} {item.text}
+     </Text>
+     <Text style={{color:c.muted,fontSize:12,marginTop:4}}>
+      {item.display_name||`${item.first_name??''} ${item.last_name??''}`.trim()}{item.due_at?` · ${formatDate(item.due_at,language)}`:''}
+     </Text>
+    </View>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${item.text} — ${t('delete')}`} hitSlop={hitSlop}
+     onPress={async()=>{await CommitmentRepository.remove(item.id);await load()}} style={{width:HIT,height:HIT,alignItems:'center',justifyContent:'center'}}>
+     <Ionicons name="trash-outline" size={18} color={c.muted}/>
+    </Pressable>
+   </View>}/>
+ </Screen>;
+}

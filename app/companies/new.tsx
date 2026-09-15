@@ -1,1 +1,41 @@
-import {useState} from 'react';import {Pressable,ScrollView,Text,TextInput} from 'react-native';import {useRouter} from 'expo-router';import {CompanyRepository} from '@/repositories/CompanyRepository';import {colors} from '@/theme';export default function NewCompany(){const [name,setName]=useState(''),[industry,setIndustry]=useState(''),[city,setCity]=useState('');const router=useRouter();return <ScrollView style={{backgroundColor:colors.paper}} contentContainerStyle={{padding:22,paddingTop:62}}><Text style={{fontSize:32,fontWeight:'800',color:colors.ink}}>Add company</Text><Text style={{color:colors.muted,marginTop:5,marginBottom:25}}>Keep the context around the people you know.</Text>{[['Company name',name,setName],['Industry',industry,setIndustry],['City',city,setCity]].map(([label,value,setter]:any)=><TextInput key={label} value={value} onChangeText={setter} placeholder={label} placeholderTextColor="#9BA3A3" style={{backgroundColor:colors.card,borderRadius:14,padding:16,fontSize:16,marginBottom:12}}/>)}<Pressable onPress={async()=>{if(name.trim()){await CompanyRepository.save({name:name.trim(),industry,city});router.back()}}} style={{backgroundColor:colors.coral,borderRadius:16,padding:18,marginTop:8}}><Text style={{color:'#fff',fontWeight:'800',textAlign:'center'}}>Save company</Text></Pressable></ScrollView>}
+import {useCallback,useState} from 'react';
+import {useLocalSearchParams} from 'expo-router';
+import {CompanyRepository} from '@/repositories/CompanyRepository';
+import {BackLink,Btn,Field,ScreenScroll,Subtitle,Title,useFocusRefresh,useGoBack} from '@/components/ui';
+import {useTranslation} from '@/i18n';
+
+/** Doubles as the edit form when an `id` is supplied. */
+export default function CompanyForm(){
+ const {id}=useLocalSearchParams<{id?:string}>();
+ const goBack=useGoBack('/companies');
+ const {t}=useTranslation();
+ const [form,setForm]=useState({name:'',industry:'',city:'',country:'',website:'',description:''});
+ const [saving,setSaving]=useState(false);
+ const set=(key:keyof typeof form)=>(value:string)=>setForm(current=>({...current,[key]:value}));
+
+ useFocusRefresh(useCallback(async()=>{
+  if(!id)return;
+  const company=await CompanyRepository.get(id);
+  if(company)setForm({name:company.name,industry:company.industry??'',city:company.city??'',country:company.country??'',website:company.website??'',description:company.description??''});
+ },[id]));
+
+ const save=async()=>{
+  if(!form.name.trim())return;
+  setSaving(true);
+  try{await CompanyRepository.save({id,...form});goBack()}
+  finally{setSaving(false)}
+ };
+
+ return <ScreenScroll>
+  <BackLink label={t('backCompanies')} onPress={goBack}/>
+  <Title>{id?t('editCompany'):t('addCompany')}</Title>
+  <Subtitle>{t('companySubtitle')}</Subtitle>
+  <Field label={t('companyName')} value={form.name} onChangeText={set('name')} autoCapitalize="words"/>
+  <Field label={t('industryLabel')} value={form.industry} onChangeText={set('industry')}/>
+  <Field label={t('cityLabel')} value={form.city} onChangeText={set('city')}/>
+  <Field label={t('countryLabel')} value={form.country} onChangeText={set('country')}/>
+  <Field label={t('websiteLabel')} value={form.website} onChangeText={set('website')} autoCapitalize="none" keyboardType="url"/>
+  <Field label={t('descriptionLabel')} value={form.description} onChangeText={set('description')} multiline style={{minHeight:100,textAlignVertical:'top'}}/>
+  <Btn label={t('saveCompany')} busy={saving} disabled={!form.name.trim()} onPress={()=>void save()}/>
+ </ScreenScroll>;
+}

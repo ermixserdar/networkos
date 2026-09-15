@@ -1,1 +1,47 @@
-import {useEffect,useState} from 'react';import {Pressable,ScrollView,Text,View} from 'react-native';import {useLocalSearchParams,useRouter} from 'expo-router';import {Company,Contact} from '@/types';import {CompanyRepository} from '@/repositories/CompanyRepository';import {ContactRow} from '@/components/ContactRow';import {colors} from '@/theme';export default function CompanyProfile(){const {id}=useLocalSearchParams<{id:string}>();const router=useRouter();const [company,setCompany]=useState<Company|null>(null),[contacts,setContacts]=useState<Contact[]>([]);useEffect(()=>{CompanyRepository.get(id).then(setCompany);CompanyRepository.contacts(id).then(x=>setContacts(x as Contact[]))},[id]);if(!company)return <View style={{flex:1,backgroundColor:colors.paper}}/>;return <ScrollView style={{backgroundColor:colors.paper}} contentContainerStyle={{padding:22,paddingTop:62,paddingBottom:40}}><Pressable onPress={()=>router.back()}><Text style={{color:colors.ink,fontWeight:'800'}}>‹ Companies</Text></Pressable><Text style={{fontSize:32,fontWeight:'800',color:colors.ink,marginTop:28}}>{company.name}</Text><Text style={{color:colors.muted,fontSize:16,marginTop:7}}>{[company.industry,company.city,company.country].filter(Boolean).join(' · ')||'No company context yet'}</Text><View style={{backgroundColor:colors.card,borderRadius:16,padding:16,marginTop:24}}><Text style={{color:company.description?colors.ink:colors.muted,fontSize:16,lineHeight:24}}>{company.description||'Add a description to remember what this place means in your network.'}</Text></View><Text style={{fontSize:21,fontWeight:'800',color:colors.ink,marginTop:30,marginBottom:7}}>People here</Text>{contacts.length?contacts.map(c=><ContactRow key={c.id} contact={c} onPress={()=>router.push(`/contacts/${c.id}` as any)}/>):<Text style={{color:colors.muted,marginTop:20}}>No people linked to this company yet.</Text>}</ScrollView>}
+import {useCallback,useState} from 'react';
+import {Alert,Text,View} from 'react-native';
+import {useLocalSearchParams,useRouter} from 'expo-router';
+import {Company,Contact} from '@/types';
+import {CompanyRepository} from '@/repositories/CompanyRepository';
+import {ContactRow} from '@/components/ContactRow';
+import {BackLink,Btn,Card,ScreenScroll,SectionLabel,Subtitle,Title,useFocusRefresh,useGoBack} from '@/components/ui';
+import {useTheme} from '@/theme';
+import {useTranslation} from '@/i18n';
+
+export default function CompanyProfile(){
+ const {id}=useLocalSearchParams<{id:string}>();
+ const router=useRouter();
+ const {t}=useTranslation();
+ const {c}=useTheme();
+ const goBack=useGoBack('/companies');
+ const [company,setCompany]=useState<Company|null>(null);
+ const [contacts,setContacts]=useState<Contact[]>([]);
+
+ useFocusRefresh(useCallback(async()=>{
+  const [current,people]=await Promise.all([CompanyRepository.get(id),CompanyRepository.contacts(id)]);
+  setCompany(current);setContacts(people as Contact[]);
+ },[id]));
+
+ if(!company)return <View style={{flex:1,backgroundColor:c.paper}}/>;
+
+ const confirmDelete=()=>Alert.alert(t('deleteCompanyConfirm'),t('deleteCompanyBody'),[
+  {text:t('cancel'),style:'cancel'},
+  {text:t('delete'),style:'destructive',onPress:async()=>{await CompanyRepository.remove(id);goBack()}},
+ ]);
+
+ return <ScreenScroll>
+  <BackLink label={t('backCompanies')} onPress={goBack}/>
+  <Title>{company.name}</Title>
+  <Subtitle>{[company.industry,company.city,company.country].filter(Boolean).join(' · ')||t('noCompanyContext')}</Subtitle>
+  <Card>
+   <Text style={{color:company.description?c.ink:c.muted,fontSize:16,lineHeight:24}}>{company.description||t('companyDescriptionEmpty')}</Text>
+  </Card>
+  <View style={{flexDirection:'row',gap:9,marginTop:14}}>
+   <Btn label={t('edit')} variant="outline" style={{flex:1}} onPress={()=>router.push(`/companies/new?id=${company.id}` as never)}/>
+   <Btn label={t('delete')} variant="danger" style={{flex:1}} onPress={confirmDelete}/>
+  </View>
+  <SectionLabel style={{marginTop:26}}>{t('peopleHere').toUpperCase()}</SectionLabel>
+  {contacts.length?contacts.map(contact=><ContactRow key={contact.id} contact={contact} onPress={()=>router.push(`/contacts/${contact.id}` as never)}/>)
+   :<Text style={{color:c.muted}}>{t('noPeopleHere')}</Text>}
+ </ScreenScroll>;
+}

@@ -30,6 +30,10 @@ PODS:
     - Yoga
   - ExpoAsset (55.0.20):
     - ExpoModulesCore
+  - ExpoCalendar (55.0.19):
+    - ExpoModulesCore
+  - ExpoClipboard (55.0.17):
+    - ExpoModulesCore
   - ExpoContacts (55.0.18):
     - ExpoModulesCore
   - ExpoCrypto (55.0.19):
@@ -53,6 +57,11 @@ PODS:
     - SDWebImageAVIFCoder (~> 0.11.0)
     - SDWebImageSVGCoder (~> 1.7.0)
     - SDWebImageWebPCoder (~> 0.14.6)
+  - ExpoImageManipulator (55.0.21):
+    - ExpoModulesCore
+    - SDWebImageWebPCoder
+  - ExpoImagePicker (55.0.24):
+    - ExpoModulesCore
   - ExpoKeepAwake (55.0.8):
     - ExpoModulesCore
   - ExpoLinking (55.0.17):
@@ -2310,6 +2319,8 @@ DEPENDENCIES:
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - Expo (from `../node_modules/expo`)
   - ExpoAsset (from `../node_modules/expo/node_modules/expo-asset/ios`)
+  - ExpoCalendar (from `../node_modules/expo-calendar/ios`)
+  - ExpoClipboard (from `../node_modules/expo-clipboard/ios`)
   - ExpoContacts (from `../node_modules/expo-contacts/ios`)
   - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
   - ExpoDevice (from `../node_modules/expo-device/ios`)
@@ -2319,6 +2330,8 @@ DEPENDENCIES:
   - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoGlassEffect (from `../node_modules/expo-glass-effect/ios`)
   - ExpoImage (from `../node_modules/expo-image/ios`)
+  - ExpoImageManipulator (from `../node_modules/expo-image-manipulator/ios`)
+  - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../node_modules/expo/node_modules/expo-keep-awake/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
   - ExpoLocalAuthentication (from `../node_modules/expo-local-authentication/ios`)
@@ -2433,6 +2446,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo"
   ExpoAsset:
     :path: "../node_modules/expo/node_modules/expo-asset/ios"
+  ExpoCalendar:
+    :path: "../node_modules/expo-calendar/ios"
+  ExpoClipboard:
+    :path: "../node_modules/expo-clipboard/ios"
   ExpoContacts:
     :path: "../node_modules/expo-contacts/ios"
   ExpoCrypto:
@@ -2451,6 +2468,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-glass-effect/ios"
   ExpoImage:
     :path: "../node_modules/expo-image/ios"
+  ExpoImageManipulator:
+    :path: "../node_modules/expo-image-manipulator/ios"
+  ExpoImagePicker:
+    :path: "../node_modules/expo-image-picker/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo/node_modules/expo-keep-awake/ios"
   ExpoLinking:
@@ -2644,6 +2665,8 @@ SPEC CHECKSUMS:
   EXConstants: dd0b0af9c628c00bc5ce556964210c4465ac9ffe
   Expo: 80a983dbbd818bf4e16a0ae0f3b0624ae58fe2be
   ExpoAsset: 64ff088f684d008431f518c0d40fccefb9cda593
+  ExpoCalendar: a7a69834ae80b68ed20dd97fe589567f1729e78c
+  ExpoClipboard: 27cec162138ade581da0c537a212a607a119668f
   ExpoContacts: 156cb192a6dfc9badd2c31b9c86e4eef39b0ad4c
   ExpoCrypto: 139bf434edb3c2a94267c70e306b04a7ceb8dc50
   ExpoDevice: 03c1082810becddbc1738d08b025ff8b0f6827c4
@@ -2653,6 +2676,8 @@ SPEC CHECKSUMS:
   ExpoFont: 21550be2946ea5bbf50f1a20b31facd19ba4150c
   ExpoGlassEffect: af1a6b9990c5ab3f99daf5d2aa4f9ef0f054d776
   ExpoImage: eeba1f2a1c6f89ba079e832dfef2b29a5ed1d8ca
+  ExpoImageManipulator: 1909ba16a3a4e4989533961ba74812fdacb65b37
+  ExpoImagePicker: dff39380dc07942edfc142c7030ff919dfa0cdb3
   ExpoKeepAwake: 45e456e29335bbd400554646a2f29e628c24072e
   ExpoLinking: bb93f165f35d38d4eb0f076b6bbd8f5188429f81
   ExpoLocalAuthentication: aeb906bba9519c229b9bcc2e7bf364ec854c6365
@@ -2663,7 +2688,7 @@ SPEC CHECKSUMS:
   ExpoRouter: a00470f69ff235a765c863842c92d109222ca761
   ExpoSecureStore: 93300a260cf19518f78afc7a114fbf2c287eef70
   ExpoSharing: 62a25371d4c8b8b0df236fb93e286f17920ade27
-  ExpoSQLite: 1d69027c534806c6d679a284c1b2b6b96990ed13
+  ExpoSQLite: 1a1b5ae9dc373e753f03c2a69a91ba1bcdaca9b6
   ExpoSymbols: cba65054b7ebee6c2ee8dc51e7c37718ba28323d
   FBLazyVector: b88945378388c6651d3725b0e8c2624fbb37ec64
   hermes-engine: 5bc5db41131a9d77115ac7e0a10ca8311901f60a

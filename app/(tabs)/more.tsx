@@ -1,2 +1,58 @@
-import {Pressable,Text,View} from 'react-native';import {useRouter} from 'expo-router';import {colors} from '@/theme';import {saveLanguage,useTranslation} from '@/i18n';
-export default function More(){const router=useRouter();const {t,language}=useTranslation();const rows=[[language==='tr'?'Bugünün odağı':'Today’s focus','/today'],[language==='tr'?'Görüşmeye hazırlan':'Meeting prep','/meetings/prep'],[language==='tr'?'Tanıştırma motoru':'Introduction engine','/introductions'],[language==='tr'?'Etkinlik modu':'Event mode','/events'],[language==='tr'?'Güvenli paylaşım':'Secure sharing','/share'],[t('profile'),'/profile'],[t('companies'),'/companies'],[language==='tr'?'Sözler ve takipler':'Promises & follow-through','/commitments'],[language==='tr'?'Rehberden aktar':'Import contacts','/contacts/import'],[t('security'),'/security'],[t('backup'),'/backup'],[t('tags'),'/tags'],[t('about'),'about']];return <View style={{flex:1,padding:22,paddingTop:62,backgroundColor:colors.paper}}><Text style={{fontSize:34,fontWeight:'800',color:colors.ink}}>{t('more')}</Text><Text style={{color:colors.muted,marginTop:5,marginBottom:22}}>{t('privateByDesign')}</Text><Text style={{fontSize:13,fontWeight:'800',color:colors.muted,marginBottom:8}}>{t('language')}</Text><View style={{flexDirection:'row',gap:8,marginBottom:18}}>{(['en','tr'] as const).map(x=><Pressable key={x} onPress={()=>void saveLanguage(x)} style={{borderRadius:12,paddingVertical:10,paddingHorizontal:16,backgroundColor:language===x?colors.teal:colors.card}}><Text style={{fontWeight:'800',color:language===x?'#fff':colors.ink}}>{x==='en'?t('english'):t('turkish')}</Text></Pressable>)}</View>{rows.map(([label,target])=><Pressable key={label} onPress={()=>target.startsWith('/')?router.push(target as any):undefined} style={{paddingVertical:19,borderBottomWidth:1,borderBottomColor:colors.line,flexDirection:'row',justifyContent:'space-between'}}><Text style={{fontSize:17,fontWeight:'700',color:colors.ink}}>{label}</Text><Text style={{color:colors.coral,fontSize:22}}>›</Text></Pressable>)}</View>}
+import {Pressable,ScrollView,Text,View} from 'react-native';
+import {useRouter} from 'expo-router';
+import {Ionicons} from '@expo/vector-icons';
+import {HIT,ThemeMode,useTheme} from '@/theme';
+import {TranslationKey,saveLanguage,saveThemeMode,useTranslation} from '@/i18n';
+import {Chip,SectionLabel} from '@/components/ui';
+
+const ROWS:{key:TranslationKey;href:string;icon:keyof typeof Ionicons.glyphMap}[]=[
+ {key:'todayFocus',href:'/today',icon:'sunny-outline'},
+ {key:'insights',href:'/insights',icon:'sparkles-outline'},
+ {key:'meetingPrep',href:'/meetings/prep',icon:'chatbubbles-outline'},
+ {key:'introductions',href:'/introductions',icon:'people-circle-outline'},
+ {key:'eventMode',href:'/events',icon:'calendar-outline'},
+ {key:'promises',href:'/commitments',icon:'checkmark-done-outline'},
+ {key:'goals',href:'/goals',icon:'flag-outline'},
+ {key:'companies',href:'/companies',icon:'business-outline'},
+ {key:'tags',href:'/tags',icon:'pricetags-outline'},
+ {key:'duplicates',href:'/duplicates',icon:'git-merge-outline'},
+ {key:'vault',href:'/vault',icon:'eye-off-outline'},
+ {key:'trash',href:'/trash',icon:'trash-outline'},
+ {key:'profile',href:'/profile',icon:'person-outline'},
+ {key:'importContacts',href:'/contacts/import',icon:'download-outline'},
+ {key:'addressBookSync',href:'/address-book',icon:'sync-circle-outline'},
+ {key:'secureSharing',href:'/share',icon:'share-outline'},
+ {key:'syncDevices',href:'/sync',icon:'swap-horizontal-outline'},
+ {key:'backup',href:'/backup',icon:'archive-outline'},
+ {key:'security',href:'/security',icon:'lock-closed-outline'},
+ {key:'about',href:'/about',icon:'information-circle-outline'},
+];
+const THEMES:{mode:ThemeMode;key:TranslationKey}[]=[{mode:'system',key:'themeSystem'},{mode:'light',key:'themeLight'},{mode:'dark',key:'themeDark'}];
+
+export default function More(){
+ const router=useRouter();
+ const {t,language}=useTranslation();
+ const {c,mode}=useTheme();
+
+ return <ScrollView style={{flex:1,backgroundColor:c.paper}} contentContainerStyle={{padding:22,paddingTop:62,paddingBottom:40}}>
+  <Text accessibilityRole="header" style={{fontSize:34,fontWeight:'800',color:c.ink}}>{t('more')}</Text>
+  <Text style={{color:c.muted,marginTop:5,marginBottom:22}}>{t('privateByDesign')}</Text>
+
+  <SectionLabel>{t('language')}</SectionLabel>
+  <View style={{flexDirection:'row',gap:8,marginBottom:18}}>
+   {(['en','tr'] as const).map(x=><Chip key={x} label={x==='en'?t('english'):t('turkish')} selected={language===x} onPress={()=>void saveLanguage(x)}/>)}
+  </View>
+
+  <SectionLabel>{t('appearance')}</SectionLabel>
+  <View style={{flexDirection:'row',gap:8,marginBottom:22}}>
+   {THEMES.map(option=><Chip key={option.mode} label={t(option.key)} selected={mode===option.mode} onPress={()=>void saveThemeMode(option.mode)}/>)}
+  </View>
+
+  {ROWS.map(row=><Pressable key={row.key} accessibilityRole="button" accessibilityLabel={t(row.key)} onPress={()=>router.push(row.href as never)}
+   style={{minHeight:HIT+14,paddingVertical:18,borderBottomWidth:1,borderBottomColor:c.line,flexDirection:'row',alignItems:'center'}}>
+   <Ionicons name={row.icon} size={20} color={c.muted} style={{width:30}}/>
+   <Text style={{fontSize:17,fontWeight:'700',color:c.ink,flex:1}}>{t(row.key)}</Text>
+   <Ionicons name="chevron-forward" size={18} color={c.coral}/>
+  </Pressable>)}
+ </ScrollView>;
+}

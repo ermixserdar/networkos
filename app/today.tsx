@@ -1,2 +1,96 @@
-import {useEffect,useState} from 'react';import {FlatList,Pressable,Text,View} from 'react-native';import {useRouter} from 'expo-router';import {colors,shadow} from '@/theme';import {ContactRepository} from '@/repositories/ContactRepository';import {CommitmentRepository} from '@/repositories/CommitmentRepository';import {Commitment,Contact} from '@/types';import {relationshipScore} from '@/services/NetworkService';import {useTranslation} from '@/i18n';
-export default function Today(){const router=useRouter();const {language}=useTranslation();const tr=language==='tr';const [contacts,setContacts]=useState<Contact[]>([]),[commitments,setCommitments]=useState<Commitment[]>([]);useEffect(()=>{void Promise.all([ContactRepository.list().then(setContacts),CommitmentRepository.list().then(setCommitments)])},[]);const now=Date.now();const focus=contacts.filter(c=>relationshipScore(c)<55).sort((a,b)=>relationshipScore(a)-relationshipScore(b)).slice(0,5);const due=commitments.filter(x=>!x.completed_at&&(!x.due_at||x.due_at<=now+86400000));const birthdays=contacts.filter(c=>(c as any).birthday).map(c=>{const b=new Date((c as any).birthday);const thisYear=new Date();thisYear.setMonth(b.getMonth(),b.getDate());thisYear.setHours(0,0,0,0);if(thisYear.getTime()<now-86400000)thisYear.setFullYear(thisYear.getFullYear()+1);return {c,at:thisYear.getTime()};}).filter(x=>x.at>=now-86400000&&x.at<=now+30*86400000).sort((a,b)=>a.at-b.at).slice(0,3);return <View style={{flex:1,backgroundColor:colors.paper,padding:22,paddingTop:58}}><Pressable onPress={()=>router.back()}><Text style={{color:colors.ink,fontWeight:'800'}}>{tr?'‹ Daha Fazla':'‹ More'}</Text></Pressable><Text style={{fontSize:32,fontWeight:'800',color:colors.ink,marginTop:27}}>{tr?'Bugünün odağı':'Today’s focus'}</Text><Text style={{color:colors.muted,fontSize:16,lineHeight:23,marginTop:7,marginBottom:22}}>{tr?'İlişkilerinizi ilerletecek en doğru sonraki adımlar.':'Small actions that keep important relationships moving.'}</Text>{due.length>0&&<View style={{backgroundColor:colors.coralSoft,borderRadius:18,padding:16,marginBottom:18,...shadow}}><Text style={{fontSize:13,fontWeight:'900',color:'#9E4738'}}>{tr?'BEKLEYEN SÖZLER':'OPEN PROMISES'}</Text>{due.slice(0,3).map(x=><Pressable key={x.id} onPress={()=>router.push('/commitments' as any)} style={{paddingTop:10}}><Text style={{color:colors.ink,fontWeight:'800'}}>{x.text}</Text><Text style={{color:colors.muted,fontSize:12,marginTop:3}}>{x.display_name||x.first_name||''}</Text></Pressable>)}</View>}{birthdays.length>0&&<View style={{backgroundColor:colors.sage,borderRadius:18,padding:16,marginBottom:18}}><Text style={{fontSize:13,fontWeight:'900',color:colors.tealDeep}}>{tr?'DOĞUM GÜNLERİ':'BIRTHDAYS'}</Text>{birthdays.map(x=><Pressable key={x.c.id} onPress={()=>router.push(`/contacts/${x.c.id}` as any)} style={{paddingTop:10}}><Text style={{color:colors.ink,fontWeight:'800'}}>{x.c.display_name||x.c.first_name} · {new Date(x.at).toLocaleDateString(tr?'tr-TR':'en-US',{day:'numeric',month:'long'})}</Text></Pressable>)}</View>}<Text style={{fontSize:13,fontWeight:'900',color:colors.muted,marginBottom:9}}>{tr?'İLİŞKİ NABZI':'RELATIONSHIP PULSE'}</Text><FlatList data={focus} keyExtractor={x=>x.id} ListEmptyComponent={<Text style={{color:colors.muted,marginTop:20}}>{tr?'Bugün için öneri yok. Harika gidiyorsunuz.':'No urgent suggestions today. You are doing great.'}</Text>} renderItem={({item})=>{const score=relationshipScore(item);const name=item.display_name||`${item.first_name} ${item.last_name||''}`;return <Pressable onPress={()=>router.push(`/contacts/${item.id}` as any)} style={{backgroundColor:colors.card,borderRadius:16,padding:16,marginBottom:9,...shadow}}><View style={{flexDirection:'row',justifyContent:'space-between'}}><Text style={{fontSize:16,fontWeight:'800',color:colors.ink}}>{name}</Text><Text style={{color:score<35?colors.coral:colors.muted,fontWeight:'900'}}>{score}/100</Text></View><Text style={{color:colors.muted,marginTop:5}}>{tr?'Kısa bir mesaj veya görüşme ilişkiyi canlandırabilir.':'A short message or conversation could keep this relationship warm.'}</Text></Pressable>}}/></View>}
+import {useCallback,useState} from 'react';
+import {Image,Pressable,Text,View} from 'react-native';
+import {useRouter} from 'expo-router';
+import {Commitment,Contact} from '@/types';
+import {ContactRepository} from '@/repositories/ContactRepository';
+import {CommitmentRepository} from '@/repositories/CommitmentRepository';
+import {relationshipScore} from '@/services/NetworkService';
+import {contactName} from '@/components/ContactRow';
+import {BackLink,Btn,Card,Empty,ScreenScroll,SectionLabel,Subtitle,Title,useFocusRefresh} from '@/components/ui';
+import {HIT,radius,shadow,useTheme} from '@/theme';
+import {formatDayMonth,nextAnniversary} from '@/utils/format';
+import {useTranslation} from '@/i18n';
+
+const DAY=86400000;
+
+export default function Today(){
+ const router=useRouter();
+ const {t,language}=useTranslation();
+ const {c}=useTheme();
+ const [focus,setFocus]=useState<Contact[]>([]);
+ const [due,setDue]=useState<Commitment[]>([]);
+ const [birthdays,setBirthdays]=useState<{contact:Contact;at:number}[]>([]);
+ const [recall,setRecall]=useState<Contact[]>([]);
+ const [recallIndex,setRecallIndex]=useState(0);
+ const [revealed,setRevealed]=useState(false);
+
+ const load=useCallback(async()=>{
+  const [weakest,promises,withBirthday]=await Promise.all([
+   ContactRepository.list({limit:200,order:'strength'}),
+   CommitmentRepository.list({openOnly:true}),
+   ContactRepository.withBirthday(),
+  ]);
+  const now=Date.now();
+  setFocus(weakest.map(x=>({x,score:relationshipScore(x)})).filter(x=>x.score<55).sort((a,b)=>a.score-b.score).slice(0,5).map(x=>x.x));
+  setDue(promises.filter(x=>!x.due_at||x.due_at<=now+DAY));
+  // Spaced recall, applied to people instead of vocabulary: a face from the quiet end.
+  setRecall(weakest.filter(x=>x.photo&&(!x.last_contact_at||now-x.last_contact_at>60*DAY)).slice(0,10));
+  setRecallIndex(0);setRevealed(false);
+  setBirthdays(withBirthday
+   .map(contact=>({contact,at:nextAnniversary(contact.birthday!)}))
+   .filter(x=>x.at<=now+30*DAY)
+   .sort((a,b)=>a.at-b.at).slice(0,3));
+ },[]);
+ useFocusRefresh(load);
+
+ return <ScreenScroll>
+  <BackLink label={t('backMore')} onPress={()=>router.back()}/>
+  <Title>{t('todayFocus')}</Title>
+  <Subtitle>{t('todayFocusSubtitle')}</Subtitle>
+
+  {due.length?<Card tone="coral" style={{marginBottom:18}}>
+   <Text style={{fontSize:13,fontWeight:'900',color:c.coralInk}}>{t('openPromises')}</Text>
+   {due.slice(0,3).map(item=><Pressable key={item.id} accessibilityRole="button" accessibilityLabel={item.text} onPress={()=>router.push('/commitments' as never)} style={{minHeight:HIT,paddingTop:10}}>
+    <Text style={{color:c.ink,fontWeight:'800'}}>{item.direction==='owed_by_me'?'↑':'↓'} {item.text}</Text>
+    <Text style={{color:c.muted,fontSize:12,marginTop:3}}>{item.display_name||item.first_name||''}</Text>
+   </Pressable>)}
+  </Card>:null}
+
+  {birthdays.length?<Card tone="sage" style={{marginBottom:18}}>
+   <Text style={{fontSize:13,fontWeight:'900',color:c.teal}}>{t('birthdays')}</Text>
+   {birthdays.map(item=><Pressable key={item.contact.id} accessibilityRole="button" accessibilityLabel={contactName(item.contact)} onPress={()=>router.push(`/contacts/${item.contact.id}` as never)} style={{minHeight:HIT,paddingTop:10}}>
+    <Text style={{color:c.ink,fontWeight:'800'}}>{contactName(item.contact)} · {formatDayMonth(item.at,language)}</Text>
+   </Pressable>)}
+  </Card>:<Card style={{marginBottom:18}}><Text style={{color:c.muted}}>{t('noBirthdays')}</Text></Card>}
+
+  {recall.length?(()=>{
+   const person=recall[recallIndex%recall.length];
+   return <Card style={{marginBottom:18,alignItems:'center'}}>
+    <Text style={{fontSize:12,fontWeight:'900',color:c.muted,letterSpacing:0.6,alignSelf:'flex-start'}}>{t('rememberTitle')}</Text>
+    <Image accessibilityIgnoresInvertColors accessibilityLabel={revealed?contactName(person):t('rememberPrompt')}
+     source={{uri:person.photo!}} style={{width:140,height:140,borderRadius:70,marginTop:14,backgroundColor:c.sage}}/>
+    <Text style={{color:c.ink,fontWeight:'800',fontSize:18,marginTop:12}}>{revealed?contactName(person):t('rememberPrompt')}</Text>
+    <Text style={{color:c.muted,marginTop:4,textAlign:'center'}}>{revealed?[person.job_title,person.company_name].filter(Boolean).join(' · ')||t('rememberHint'):t('rememberHint')}</Text>
+    <View style={{flexDirection:'row',gap:8,marginTop:14,alignSelf:'stretch'}}>
+     {revealed
+      ?<Btn label={t('rememberOpen')} variant="ghost" style={{flex:1}} onPress={()=>router.push(`/contacts/${person.id}` as never)}/>
+      :<Btn label={t('rememberReveal')} variant="ghost" style={{flex:1}} onPress={()=>setRevealed(true)}/>}
+     <Btn label={t('rememberNext')} variant="outline" style={{flex:1}} onPress={()=>{setRecallIndex(recallIndex+1);setRevealed(false)}}/>
+    </View>
+   </Card>;
+  })():null}
+
+  <SectionLabel>{t('relationshipPulse')}</SectionLabel>
+  {focus.length?focus.map(contact=>{
+   const score=relationshipScore(contact);
+   return <Pressable key={contact.id} accessibilityRole="button" accessibilityLabel={`${contactName(contact)} ${t('scoreOf',score)}`} onPress={()=>router.push(`/contacts/${contact.id}` as never)}
+    style={{backgroundColor:c.card,borderRadius:radius.md,padding:16,marginBottom:9,...shadow}}>
+    <View style={{flexDirection:'row',justifyContent:'space-between'}}>
+     <Text style={{fontSize:16,fontWeight:'800',color:c.ink,flex:1}}>{contactName(contact)}</Text>
+     <Text style={{color:score<35?c.coral:c.muted,fontWeight:'900'}}>{t('scoreOf',score)}</Text>
+    </View>
+    <Text style={{color:c.muted,marginTop:5}}>{t('pulseHint')}</Text>
+   </Pressable>;
+  }):<Empty>{t('noSuggestions')}</Empty>}
+ </ScreenScroll>;
+}

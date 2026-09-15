@@ -1,1 +1,42 @@
-import {useEffect,useState} from 'react';import {Pressable,ScrollView,Text,TextInput,View} from 'react-native';import {useRouter} from 'expo-router';import {Owner,OwnerRepository} from '@/repositories/OwnerRepository';import {colors} from '@/theme';export default function Profile(){const router=useRouter();const [owner,setOwner]=useState<Owner|null>(null);const [first,setFirst]=useState(''),[last,setLast]=useState(''),[role,setRole]=useState(''),[company,setCompany]=useState(''),[email,setEmail]=useState('');useEffect(()=>{OwnerRepository.get().then(x=>{if(x){setOwner(x);setFirst(x.first_name);setLast(x.last_name);setRole(x.job_title??'');setCompany(x.company??'');setEmail(x.email??'')}})},[]);return <ScrollView style={{backgroundColor:colors.paper}} contentContainerStyle={{padding:22,paddingTop:62}}><Pressable onPress={()=>router.back()}><Text style={{color:colors.ink,fontWeight:'800'}}>‹ More</Text></Pressable><Text style={{fontSize:32,fontWeight:'800',color:colors.ink,marginTop:28}}>Your profile</Text><Text style={{color:colors.muted,marginTop:5,marginBottom:24}}>This is the “me” at the center of your network.</Text>{[['First name',first,setFirst],['Last name',last,setLast],['Job title',role,setRole],['Company',company,setCompany],['Email',email,setEmail]].map(([label,value,setter]:any)=><TextInput key={label} value={value} onChangeText={setter} placeholder={label} placeholderTextColor="#9BA3A3" style={{backgroundColor:colors.card,borderRadius:14,padding:16,fontSize:16,marginBottom:12}}/>)}<Pressable onPress={async()=>{await OwnerRepository.save({id:owner?.id,first_name:first,last_name:last,job_title:role,company,email});router.back()}} style={{backgroundColor:colors.coral,borderRadius:16,padding:18,marginTop:8}}><Text style={{color:'#fff',fontWeight:'800',textAlign:'center'}}>Save profile</Text></Pressable></ScrollView>}
+import {useCallback,useState} from 'react';
+import {useRouter} from 'expo-router';
+import {Owner,OwnerRepository} from '@/repositories/OwnerRepository';
+import {BackLink,Btn,Field,ScreenScroll,Subtitle,Title,useFocusRefresh} from '@/components/ui';
+import {useTranslation} from '@/i18n';
+
+export default function Profile(){
+ const router=useRouter();
+ const {t}=useTranslation();
+ const [owner,setOwner]=useState<Owner|null>(null);
+ const [form,setForm]=useState({first:'',last:'',role:'',company:'',email:'',phone:''});
+ const [saving,setSaving]=useState(false);
+ const set=(key:keyof typeof form)=>(value:string)=>setForm(current=>({...current,[key]:value}));
+
+ useFocusRefresh(useCallback(async()=>{
+  const current=await OwnerRepository.get();
+  if(!current)return;
+  setOwner(current);
+  setForm({first:current.first_name,last:current.last_name??'',role:current.job_title??'',company:current.company??'',email:current.email??'',phone:current.phone??''});
+ },[]));
+
+ const save=async()=>{
+  setSaving(true);
+  try{
+   await OwnerRepository.save({id:owner?.id,first_name:form.first.trim(),last_name:form.last.trim(),job_title:form.role.trim(),company:form.company.trim(),email:form.email.trim(),phone:form.phone.trim()});
+   router.back();
+  }finally{setSaving(false)}
+ };
+
+ return <ScreenScroll>
+  <BackLink label={t('backMore')} onPress={()=>router.back()}/>
+  <Title>{t('profileTitle')}</Title>
+  <Subtitle>{t('profileSubtitle')}</Subtitle>
+  <Field label={t('firstNameLabel')} value={form.first} onChangeText={set('first')} autoCapitalize="words"/>
+  <Field label={t('lastNameLabel')} value={form.last} onChangeText={set('last')} autoCapitalize="words"/>
+  <Field label={t('jobTitleLabel')} value={form.role} onChangeText={set('role')}/>
+  <Field label={t('companyLabel')} value={form.company} onChangeText={set('company')}/>
+  <Field label={t('emailLabel')} value={form.email} onChangeText={set('email')} autoCapitalize="none" keyboardType="email-address"/>
+  <Field label={t('phoneLabel')} value={form.phone} onChangeText={set('phone')} keyboardType="phone-pad"/>
+  <Btn label={t('saveProfile')} busy={saving} disabled={!form.first.trim()} onPress={()=>void save()} style={{marginTop:8}}/>
+ </ScreenScroll>;
+}

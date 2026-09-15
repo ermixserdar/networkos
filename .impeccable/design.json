@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-15T11:20:00.000Z",
+  "title": "Design System: NetworkOS",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#102F38", "dark": "#EDF4F2", "tonalRamp": ["#04131A", "#082029", "#0C2A33", "#102F38", "#2B4C55", "#5B7A82", "#9DB5B9", "#DEE9EB"] },
+      "muted": { "role": "neutral", "displayName": "Muted Slate", "canonical": "#64777B", "dark": "#9DB5B1", "tonalRamp": ["#141C1E", "#25322F", "#3B4C4E", "#4F6165", "#64777B", "#8EA0A3", "#BCC9CB", "#E6ECED"] },
+      "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#F6F8F7", "dark": "#0B1E22", "tonalRamp": ["#0B1E22", "#143136", "#2A4A4F", "#5E7C80", "#98AFB1", "#C9D6D5", "#E7EDEB", "#F6F8F7"] },
+      "card": { "role": "neutral", "displayName": "Card Leaf", "canonical": "#FFFFFF", "dark": "#123037", "tonalRamp": ["#0C2026", "#123037", "#1E454D", "#39666E", "#6B959B", "#A6C4C8", "#DCE9EA", "#FFFFFF"] },
+      "harbour-teal": { "role": "primary", "displayName": "Harbour Teal", "canonical": "#0B4B52", "dark": "#12454C", "tonalRamp": ["#03191C", "#062B30", "#0B4B52", "#116169", "#2C858D", "#68AEB4", "#A8D0D3", "#DDEDEE"] },
+      "teal-deep": { "role": "primary", "displayName": "Deep Harbour", "canonical": "#082F36", "dark": "#071A1E", "tonalRamp": ["#020D10", "#04191D", "#082F36", "#0E4650", "#1F6B76", "#5A9AA3", "#9DC6CB", "#DAEAEC"] },
+      "teal-muted": { "role": "primary", "displayName": "Harbour Mist", "canonical": "#B8D7D2", "dark": "#8FB6B1", "tonalRamp": ["#17302D", "#245049", "#357069", "#528E87", "#7FAFA9", "#B8D7D2", "#D7E8E5", "#EEF6F4"] },
+      "signal-coral": { "role": "secondary", "displayName": "Signal Coral", "canonical": "#F0644F", "dark": "#F0644F", "tonalRamp": ["#3A130C", "#5E2116", "#8A3323", "#B84733", "#F0644F", "#F58D7C", "#FABAAF", "#FDE5E0"] },
+      "coral-soft": { "role": "secondary", "displayName": "Coral Wash", "canonical": "#F9D8D1", "dark": "#3A2220", "tonalRamp": ["#3A2220", "#5A332D", "#7E4A41", "#A9675B", "#CE8E80", "#E6B3A7", "#F9D8D1", "#FDEEEA"] },
+      "coral-ink": { "role": "secondary", "displayName": "Burnt Coral", "canonical": "#9E4738", "dark": "#F2A796", "tonalRamp": ["#2B110C", "#471C14", "#6B2C20", "#9E4738", "#C36A58", "#DE9585", "#F0C0B5", "#FAE6E1"] },
+      "sage": { "role": "tertiary", "displayName": "Sage Whisper", "canonical": "#E3F0ED", "dark": "#183239", "tonalRamp": ["#122A28", "#1E413D", "#2F5C56", "#4A7E76", "#79A9A1", "#AECFC9", "#E3F0ED", "#F3FAF8"] },
+      "line": { "role": "neutral", "displayName": "Hairline", "canonical": "#E1E9E7", "dark": "#1E3D43", "tonalRamp": ["#16211F", "#26332F", "#3E504C", "#607471", "#93A6A3", "#C3D1CE", "#E1E9E7", "#F3F7F6"] },
+      "field": { "role": "neutral", "displayName": "Field", "canonical": "#FFFFFF", "dark": "#16343B", "tonalRamp": ["#0E2227", "#16343B", "#234B54", "#3E6F79", "#6F9AA1", "#A8C8CD", "#DCEAEC", "#FFFFFF"] },
+      "placeholder": { "role": "neutral", "displayName": "Placeholder Grey", "canonical": "#9BA3A3", "dark": "#6E8A87", "tonalRamp": ["#1E2323", "#333A3A", "#4C5555", "#6B7575", "#8A9393", "#9BA3A3", "#C6CCCC", "#EAEDED"] },
+      "good": { "role": "tertiary", "displayName": "Healthy Green", "canonical": "#2E8C78", "dark": "#5FBFA6", "tonalRamp": ["#0B2621", "#123E35", "#1D5C4F", "#2E8C78", "#4FAE97", "#84C9B9", "#B8E1D7", "#E2F4EF"] },
+      "warn": { "role": "tertiary", "displayName": "Cooling Clay", "canonical": "#A85A4A", "dark": "#E08774", "tonalRamp": ["#2C1610", "#48241B", "#6B382C", "#A85A4A", "#C57F6F", "#DCA598", "#EFCCC3", "#F9EAE6"] }
+    },
+    "typographyMeta": {
+      "hero": { "displayName": "Hero", "purpose": "One screen title per screen; the first text after the back link." },
+      "title": { "displayName": "Headline", "purpose": "Stat figures and card headings." },
+      "body": { "displayName": "Body", "purpose": "Contact names, field text, card copy. 23pt leading; must wrap for Turkish." },
+      "label": { "displayName": "Section Label", "purpose": "Ledger column headings; 900 weight, upper case at call sites." },
+      "caption": { "displayName": "Caption", "purpose": "Field labels and rating captions." }
+    },
+    "shadows": [
+      { "name": "ambient-card", "value": "0 8px 20px rgba(8, 47, 54, 0.10)", "purpose": "The only shadow in the system. Separates a card from paper; never stacked, never deepened." }
+    ],
+    "motion": [
+      { "name": "graph-settle", "value": "60 force ticks in 12-tick chunks across animation frames", "purpose": "Network canvas layout advances between frames so the tab never freezes, then publishes once." }
+    ],
+    "breakpoints": [
+      { "name": "iphone", "value": "390pt", "purpose": "The only layout width. iPad runs the iPhone compatibility window." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one coral action per screen region: save, import, enable.",
+      "html": "<button class=\"ds-btn-primary\">Kişiyi kaydet</button>",
+      "css": ".ds-btn-primary { min-height: 52px; padding: 16px; border: none; border-radius: 16px; background: #F0644F; color: #fff; font: 800 16px -apple-system, system-ui, sans-serif; width: 100%; transition: opacity .15s ease; } .ds-btn-primary:hover { opacity: .9; } .ds-btn-primary:active { opacity: .75; } .ds-btn-primary:focus-visible { outline: 2px solid #0B4B52; outline-offset: 2px; } .ds-btn-primary:disabled { background: #E1E9E7; color: #64777B; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "The default second action; ink on nothing.",
+      "html": "<button class=\"ds-btn-outline\">Düzenle</button>",
+      "css": ".ds-btn-outline { min-height: 52px; padding: 16px; border: 1px solid #102F38; border-radius: 16px; background: transparent; color: #102F38; font: 800 16px -apple-system, system-ui, sans-serif; } .ds-btn-outline:hover { background: rgba(16,47,56,.04); } .ds-btn-outline:focus-visible { outline: 2px solid #0B4B52; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Affirmative secondary action inside a card: teal on sage.",
+      "html": "<button class=\"ds-btn-ghost\">Kişileri seç…</button>",
+      "css": ".ds-btn-ghost { min-height: 52px; padding: 16px; border: none; border-radius: 16px; background: #E3F0ED; color: #0B4B52; font: 800 16px -apple-system, system-ui, sans-serif; } .ds-btn-ghost:hover { background: #D5E8E3; } .ds-btn-ghost:focus-visible { outline: 2px solid #0B4B52; outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive actions are outlined, never filled — the coral fill belongs to what the user wants.",
+      "html": "<button class=\"ds-btn-danger\">Sil</button>",
+      "css": ".ds-btn-danger { min-height: 52px; padding: 16px; border: 1px solid #F0644F; border-radius: 16px; background: transparent; color: #F0644F; font: 800 16px -apple-system, system-ui, sans-serif; } .ds-btn-danger:hover { background: rgba(240,100,79,.06); } .ds-btn-danger:focus-visible { outline: 2px solid #0B4B52; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "A raised white leaf holding exactly one idea. Sage and coral tones carry explanation and warning.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Uygulama kilidi</div><p class=\"ds-card-body\">Biyometrik kilit isteğe bağlıdır. Veritabanı anahtarınız her durumda güvenli alanda kalır.</p></div>",
+      "css": ".ds-card { background: #fff; border-radius: 18px; padding: 16px; box-shadow: 0 8px 20px rgba(8,47,54,.10); font-family: -apple-system, system-ui, sans-serif; } .ds-card-title { font-size: 17px; font-weight: 800; color: #102F38; } .ds-card-body { margin: 5px 0 0; font-size: 15px; line-height: 20px; color: #64777B; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Caption label above, hairline-bordered white field below. Errors are alerts, never inline red.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Şirket adı</span><input class=\"ds-field-input\" placeholder=\"isteğe bağlı\"></label>",
+      "css": ".ds-field { display: block; margin-bottom: 12px; font-family: -apple-system, system-ui, sans-serif; } .ds-field-label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; color: #64777B; } .ds-field-input { width: 100%; min-height: 50px; padding: 15px; border: 1px solid #E1E9E7; border-radius: 12px; background: #fff; font-size: 16px; color: #102F38; box-sizing: border-box; } .ds-field-input::placeholder { color: #9BA3A3; } .ds-field-input:focus-visible { outline: 2px solid #0B4B52; outline-offset: 1px; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filter and option selector. Selected swaps to teal ground rather than thickening the border.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip ds-chip-selected\">Türkçe</button><button class=\"ds-chip\">English</button></div>",
+      "css": ".ds-chips { display: flex; gap: 8px; font-family: -apple-system, system-ui, sans-serif; } .ds-chip { min-height: 44px; padding: 10px 14px; border: 1px solid #E1E9E7; border-radius: 16px; background: #fff; color: #102F38; font-size: 15px; font-weight: 700; } .ds-chip-selected { background: #0B4B52; border-color: #0B4B52; color: #fff; } .ds-chip:focus-visible { outline: 2px solid #0B4B52; outline-offset: 2px; }"
+    },
+    {
+      "name": "Contact Row",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The ledger line: avatar or initials, name, role · company, and the coral strength mark.",
+      "html": "<div class=\"ds-row\"><div class=\"ds-avatar\">AL</div><div class=\"ds-row-main\"><div class=\"ds-row-name\">Ada Lovelace</div><div class=\"ds-row-detail\">Analist · Nileva</div></div><div class=\"ds-row-strength\">● 4</div></div>",
+      "css": ".ds-row { display: flex; align-items: center; min-height: 62px; padding: 14px 0; border-bottom: 1px solid #E1E9E7; font-family: -apple-system, system-ui, sans-serif; } .ds-avatar { width: 48px; height: 48px; border-radius: 24px; background: #E3F0ED; color: #0B4B52; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; } .ds-row-main { margin-left: 12px; flex: 1; } .ds-row-name { font-size: 16px; font-weight: 700; color: #102F38; } .ds-row-detail { margin-top: 3px; font-size: 14px; color: #64777B; } .ds-row-strength { color: #F0644F; font-weight: 800; } .ds-row:hover { background: rgba(227,240,237,.4); }"
+    },
+    {
+      "name": "Switch Row",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "A setting that is on or off, with the sentence explaining what it costs or protects.",
+      "html": "<div class=\"ds-switchrow\"><div class=\"ds-switchrow-head\"><span class=\"ds-switchrow-label\">Aktardığınız kişileri güncel tut</span><span class=\"ds-switch ds-switch-on\"><i></i></span></div><p class=\"ds-switchrow-body\">Boş alanlar rehberinizden doldurulur. Yazdıklarınızın üzerine yazılmaz.</p></div>",
+      "css": ".ds-switchrow { background: #fff; border-radius: 18px; padding: 16px; box-shadow: 0 8px 20px rgba(8,47,54,.10); font-family: -apple-system, system-ui, sans-serif; } .ds-switchrow-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; } .ds-switchrow-label { font-size: 16px; font-weight: 800; color: #102F38; } .ds-switchrow-body { margin: 6px 0 0; font-size: 15px; line-height: 20px; color: #64777B; } .ds-switch { width: 51px; height: 31px; border-radius: 16px; background: #E1E9E7; display: inline-flex; align-items: center; padding: 2px; box-sizing: border-box; transition: background .2s ease; } .ds-switch-on { background: #0B4B52; justify-content: flex-end; } .ds-switch i { width: 27px; height: 27px; border-radius: 14px; background: #fff; box-shadow: 0 2px 4px rgba(8,47,54,.2); }"
+    },
+    {
+      "name": "Section Label",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The ledger's column heading: 13px, 900 weight, tracked, muted.",
+      "html": "<div class=\"ds-section-label\">BEKLEYEN SÖZLER</div>",
+      "css": ".ds-section-label { font: 900 13px -apple-system, system-ui, sans-serif; letter-spacing: .6px; color: #64777B; margin-bottom: 9px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Ledger",
+    "overview": "NetworkOS is a paper ledger for people. Its surfaces are near-white and matte, its headings are ink, and a single coral mark sits in the margin wherever something needs a decision. The product's promise — a private memory that never raises its voice — is carried visually by restraint: the app never competes with the person the user is trying to remember. Density is generous rather than efficient; a screen would rather show six contacts calmly than fourteen in a grid.\n\nThe world is built from four materials. Paper (#F6F8F7) is the ground everything rests on. Card (#FFFFFF) is the raised leaf that holds one idea. Harbour Teal is the ink of intent: selected chips, the owner's own node, the checkbox that is on. Signal Coral is the only warm voice in the system and it is rationed — one accent per screen region, reserved for the next action and for relationship strength.\n\nDepth is soft and singular: one diffuse teal-tinted shadow, never stacked, never dramatic. Corners are generously rounded (12–24 pt) so nothing feels administrative. Type is the system face at large sizes and heavy weights; the hierarchy is carried by weight and scale, not by rules, boxes, or color. Dark mode is a first-class appearance, not an inversion: paper becomes deep petrol (#0B1E22), cards lift to #123037, and coral stays exactly where it is so the accent means the same thing in both worlds.",
+    "keyCharacteristics": [
+      "Matte, near-white ground with white cards; no gradients, no glass, no texture.",
+      "One soft teal shadow as the only depth device.",
+      "Coral is rationed; teal carries state; everything else is ink and muted grey.",
+      "Heavy weights (700–900) on small type; hierarchy through weight, not decoration.",
+      "44 pt minimum touch targets everywhere, with generous vertical rhythm.",
+      "Bilingual by construction: every string is a key, so layouts must tolerate Turkish's longer words."
+    ],
+    "rules": [
+      { "name": "The One Warm Voice Rule", "body": "Coral appears at most once per screen region, and only on the action the user is most likely to want next. A screen with two coral buttons has no primary action.", "section": "colors" },
+      { "name": "The Teal-Is-State Rule", "body": "Teal marks what is on, selected, or yours. If a teal surface is not communicating state or ownership, it is decoration and must be sage or card instead.", "section": "colors" },
+      { "name": "The Constant Accent Rule", "body": "Coral's hex never changes between light and dark. The accent is the one fixed point the user learns; the rest of the palette may move around it.", "section": "colors" },
+      { "name": "The Heavy-Small Rule", "body": "The smaller the type, the heavier the weight: 16 pt body sits at 400–700, 13 pt labels at 900. Small and light never appear together.", "section": "typography" },
+      { "name": "The One Hero Rule", "body": "Exactly one 32 pt title per screen, always the first text after the back link. Sub-sections use 13 pt section labels, never a second hero.", "section": "typography" },
+      { "name": "The Single Shadow Rule", "body": "One shadow value exists. If a surface needs more separation than it provides, change the tone or add a hairline — never deepen or stack the shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do put exactly one coral primary action on a screen; use outline or ghost for everything else.",
+      "Do use teal only for state and ownership — selected, checked, on, yours.",
+      "Do keep every interactive element at 44 pt or taller, with hitSlop on text-sized controls.",
+      "Do write both an English and a Turkish string for every new label; the type system enforces it, and the layout must survive the longer one.",
+      "Do carry new colours through both palettes in src/theme.ts; a screen that reads a raw hex breaks dark mode.",
+      "Do keep the ambient card shadow as the only shadow, and reach for tone or a hairline when more separation is needed.",
+      "Do design the empty state with the screen: muted, centred, one sentence, and the action that fills it."
+    ],
+    "donts": [
+      "Don't introduce gradients, glassmorphism, blur panels, or texture; the ground is matte paper.",
+      "Don't fill a destructive button with coral — destructive is outlined.",
+      "Don't add a second typeface or a custom UI font; the system face is the voice.",
+      "Don't pair small type with light weight; 13 pt and under is 800–900.",
+      "Don't use good / warn as decoration — they belong to relationship health only.",
+      "Don't stack cards inside cards, or place a divider inside a card; cards hold one idea.",
+      "Don't hard-code light-mode hexes in a screen; read from useTheme()."
+    ]
+  }
+}

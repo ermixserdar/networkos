@@ -1,2 +1,144 @@
-import {Pressable,ScrollView,Text,View} from 'react-native';import {useRouter} from 'expo-router';import {Ionicons} from '@expo/vector-icons';import {useContacts} from '@/hooks/useContacts';import {ContactRow} from '@/components/ContactRow';import {colors,shadow} from '@/theme';import {relativeDate} from '@/utils/format';import {useTranslation} from '@/i18n';
-export default function Home(){const {contacts}=useContacts();const router=useRouter();const {t,language}=useTranslation();const due=contacts.filter(c=>c.next_follow_up_at&&c.next_follow_up_at<=Date.now()).sort((a,b)=>(a.next_follow_up_at??0)-(b.next_follow_up_at??0));const strong=contacts.filter(c=>c.relationship_strength>=4).length;return <ScrollView style={{flex:1,backgroundColor:colors.paper}} contentContainerStyle={{padding:20,paddingTop:58,paddingBottom:40}}><View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}><View><Text style={{fontSize:12,color:colors.coral,fontWeight:'900',letterSpacing:2}}>NETWORKOS</Text><Text style={{fontSize:34,fontWeight:'800',color:colors.ink,marginTop:8}}>{t('keepTheThread')}</Text></View><Pressable accessibilityLabel="Add contact" onPress={()=>router.push('/contacts/new' as any)} style={{width:50,height:50,borderRadius:16,backgroundColor:colors.coral,alignItems:'center',justifyContent:'center',...shadow}}><Ionicons name="add" size={27} color="#fff"/></Pressable></View><View style={{marginTop:26,borderRadius:24,backgroundColor:colors.teal,padding:21,overflow:'hidden',...shadow}}><View style={{position:'absolute',right:-34,top:-42,width:175,height:175,borderRadius:88,borderWidth:1,borderColor:'#5D8988',opacity:.45}}/><View style={{position:'absolute',right:4,top:-8,width:110,height:110,borderRadius:55,borderWidth:1,borderColor:'#5D8988',opacity:.45}}/><Text style={{color:'#B8D7D2',fontSize:11,fontWeight:'900',letterSpacing:1.3}}>{t('networkToday')}</Text><Text style={{color:'#fff',fontSize:25,fontWeight:'800',marginTop:10}}>{contacts.length?t('strongConnections',strong):t('startWithOne')}</Text><Text style={{color:'#C4DDDA',fontSize:14,lineHeight:20,marginTop:7,maxWidth:270}}>{contacts.length?t('keepPeopleClose'):t('addSomeone')}</Text><Pressable accessibilityRole="button" onPress={()=>router.push('/(tabs)/network' as any)} style={{marginTop:19,flexDirection:'row',alignItems:'center'}}><Text style={{color:'#fff',fontWeight:'800'}}>{t('openNetwork')}</Text><Ionicons name="arrow-forward" size={17} color={colors.coral} style={{marginLeft:8}}/></Pressable></View><View style={{flexDirection:'row',gap:10,marginTop:16}}><View style={{flex:1,backgroundColor:colors.card,borderRadius:17,padding:16}}><Text style={{fontSize:24,fontWeight:'800',color:colors.ink}}>{contacts.length}</Text><Text style={{fontSize:12,color:colors.muted,marginTop:4}}>{t('contacts')}</Text></View><View style={{flex:1,backgroundColor:colors.card,borderRadius:17,padding:16}}><Text style={{fontSize:24,fontWeight:'800',color:colors.ink}}>{due.length}</Text><Text style={{fontSize:12,color:colors.muted,marginTop:4}}>{t('followUp')}</Text></View><View style={{flex:1,backgroundColor:colors.card,borderRadius:17,padding:16}}><Text style={{fontSize:24,fontWeight:'800',color:colors.ink}}>{strong}</Text><Text style={{fontSize:12,color:colors.muted,marginTop:4}}>{t('statStrong')}</Text></View></View><View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginTop:31,marginBottom:11}}><Text style={{fontSize:20,fontWeight:'800',color:colors.ink}}>{t('todaySection')}</Text><Text style={{fontSize:13,color:colors.muted}}>{t('followUpsCount',due.length)}</Text></View>{due.length?due.slice(0,2).map(c=><View key={c.id} style={{backgroundColor:colors.card,borderRadius:17,padding:15,marginBottom:9}}><ContactRow contact={c} onPress={()=>router.push(`/contacts/${c.id}` as any)}/><Text style={{color:colors.coral,fontSize:12,fontWeight:'800',marginTop:5}}>{t('followUpPrefix')} · {relativeDate(c.next_follow_up_at,language)}</Text></View>):<View style={{borderTopWidth:1,borderBottomWidth:1,borderColor:colors.line,paddingVertical:18}}><Text style={{color:colors.muted}}>{t('quietDay')}</Text></View>}<Text style={{fontSize:20,fontWeight:'800',color:colors.ink,marginTop:30,marginBottom:7}}>{t('recentlyAdded')}</Text>{contacts.slice(0,4).map(c=><ContactRow key={c.id} contact={c} onPress={()=>router.push(`/contacts/${c.id}` as any)}/>)}</ScrollView>}
+import {useCallback,useState} from 'react';
+import {Pressable,ScrollView,Text,View} from 'react-native';
+import {useRouter} from 'expo-router';
+import {Ionicons} from '@expo/vector-icons';
+import {Contact} from '@/types';
+import {ContactRepository} from '@/repositories/ContactRepository';
+import {CommitmentRepository} from '@/repositories/CommitmentRepository';
+import {FollowUpService} from '@/services/FollowUpService';
+import {NotificationService} from '@/services/NotificationService';
+import {ContactRow} from '@/components/ContactRow';
+import {Btn,Card,ErrorNote,Loading,useFocusRefresh,useTopInset} from '@/components/ui';
+import {HIT,hitSlop,radius,shadow,spacing,useTheme} from '@/theme';
+import {nextAnniversary,relativeFuture} from '@/utils/format';
+import {useTranslation} from '@/i18n';
+
+type Birthday={contact:Contact;at:number};
+type HomeData={total:number;strong:number;due:Contact[];promises:number;birthdays:Birthday[];recent:Contact[]};
+const EMPTY:HomeData={total:0,strong:0,due:[],promises:0,birthdays:[],recent:[]};
+const WEEK=7*86400000;
+
+/**
+ * Home is the day's work, not a dashboard: what is due leads, the totals follow. Nothing here is
+ * a summary of something the user has to go elsewhere to act on — every row acts in place.
+ */
+export default function Home(){
+ const [data,setData]=useState<HomeData>(EMPTY);
+ const [state,setState]=useState<'loading'|'ready'|'error'>('loading');
+ const router=useRouter();
+ const {t,language}=useTranslation();
+ const {c}=useTheme();
+ const top=useTopInset();
+
+ const load=useCallback(async()=>{
+  try{
+   const [stats,overdue,today,recent,promises,withBirthday]=await Promise.all([
+    ContactRepository.stats(),
+    FollowUpService.list('overdue'),
+    FollowUpService.list('today'),
+    ContactRepository.list({limit:4,order:'recent'}),
+    CommitmentRepository.dueCount(),
+    ContactRepository.withBirthday(),
+   ]);
+   const now=Date.now();
+   const birthdays=withBirthday
+    .map(contact=>({contact,at:nextAnniversary(contact.birthday!,now)}))
+    .filter(item=>item.at-now<=WEEK)
+    .sort((a,b)=>a.at-b.at)
+    .slice(0,3);
+   setData({total:stats.total,strong:stats.strong,due:[...overdue,...today],promises,birthdays,recent});
+   setState('ready');
+   // Keep the weekly summary honest about the week it is actually sent in.
+   void NotificationService.refreshDigest({cooling:overdue.length,due:promises});
+  }catch{
+   // An empty screen and a failed read look identical; only this keeps them apart.
+   setState('error');
+  }
+ },[]);
+ useFocusRefresh(load);
+
+ const act=async(action:'done'|'snooze',contact:Contact)=>{
+  if(action==='done')await FollowUpService.markContacted(contact);
+  else await FollowUpService.snooze(contact);
+  await load();
+ };
+
+ const rowAction=(label:string,icon:keyof typeof Ionicons.glyphMap,onPress:()=>void)=>
+  <Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={hitSlop} onPress={onPress}
+   style={{minHeight:HIT,flexDirection:'row',alignItems:'center',gap:6,paddingHorizontal:12,borderRadius:radius.sm,backgroundColor:c.sage}}>
+   <Ionicons name={icon} size={16} color={c.onSage}/>
+   <Text style={{color:c.onSage,fontWeight:'800',fontSize:13}}>{label}</Text>
+  </Pressable>;
+
+ const stat=(value:number,label:string,onPress:()=>void)=><Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label}: ${value}`} onPress={onPress}
+  style={{flex:1,minHeight:HIT+16,backgroundColor:c.card,borderRadius:radius.lg,padding:spacing.md}}>
+  <Text style={{fontSize:24,fontWeight:'800',color:c.ink}}>{value}</Text>
+  <Text style={{fontSize:12,color:c.muted,marginTop:4}}>{label}</Text>
+ </Pressable>;
+
+ const quiet=!data.due.length&&!data.birthdays.length&&!data.promises;
+
+ return <ScrollView style={{flex:1,backgroundColor:c.paper}} contentContainerStyle={{padding:spacing.lg,paddingTop:top,paddingBottom:40}}>
+  <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
+   <Text accessibilityRole="header" style={{fontSize:32,fontWeight:'800',color:c.ink,flex:1,paddingRight:12}}>{t('keepTheThread')}</Text>
+   <Pressable accessibilityRole="button" accessibilityLabel={t('addContact')} hitSlop={hitSlop} onPress={()=>router.push('/contacts/form' as never)}
+    style={{width:HIT+6,height:HIT+6,borderRadius:(HIT+6)/2,backgroundColor:c.coral,alignItems:'center',justifyContent:'center',...shadow}}>
+    <Ionicons name="add" size={27} color={c.onTeal}/>
+   </Pressable>
+  </View>
+
+  {state==='loading'?<Loading/>:state==='error'?<ErrorNote onRetry={()=>void load()}/>:<>
+   <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginTop:26,marginBottom:11}}>
+    <Text accessibilityRole="header" style={{fontSize:20,fontWeight:'800',color:c.ink}}>{t('todaySection')}</Text>
+    {data.due.length>3?<Pressable accessibilityRole="button" hitSlop={hitSlop} onPress={()=>router.push('/(tabs)/followup' as never)} style={{minHeight:HIT,justifyContent:'center'}}>
+     <Text style={{fontSize:13,color:c.onSage,fontWeight:'800'}}>{t('viewAll')}</Text>
+    </Pressable>:null}
+   </View>
+
+   {data.due.slice(0,3).map(contact=><View key={contact.id} style={{backgroundColor:c.card,borderRadius:radius.lg,padding:15,marginBottom:9}}>
+    <ContactRow contact={contact} onPress={()=>router.push(`/contacts/${contact.id}` as never)}/>
+    <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginTop:10}}>
+     <Text style={{color:c.warn,fontSize:12,fontWeight:'800',flex:1,paddingRight:8}}>{t('followUpPrefix')} · {relativeFuture(contact.next_follow_up_at,language)}</Text>
+     <View style={{flexDirection:'row',gap:8}}>
+      {rowAction(t('snoozeWeek'),'time-outline',()=>void act('snooze',contact))}
+      {rowAction(t('markContacted'),'checkmark-circle-outline',()=>void act('done',contact))}
+     </View>
+    </View>
+   </View>)}
+
+   {data.birthdays.map(item=><Pressable key={item.contact.id} accessibilityRole="button" onPress={()=>router.push(`/contacts/${item.contact.id}` as never)}
+    style={{backgroundColor:c.card,borderRadius:radius.lg,padding:15,marginBottom:9,minHeight:HIT}}>
+    <ContactRow contact={item.contact} onPress={()=>router.push(`/contacts/${item.contact.id}` as never)}
+     trailing={<Ionicons name="gift-outline" size={18} color={c.onSage}/>}/>
+    <Text style={{color:c.muted,fontSize:12,fontWeight:'800',marginTop:5}}>{t('birthdayLabel')} · {t('birthdayIn',Math.max(0,Math.round((item.at-Date.now())/86400000)))}</Text>
+   </Pressable>)}
+
+   {data.promises?<Pressable accessibilityRole="button" accessibilityLabel={t('promisesDue',data.promises)} onPress={()=>router.push('/commitments' as never)}
+    style={{backgroundColor:c.card,borderRadius:radius.lg,padding:15,marginBottom:9,minHeight:HIT,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
+    <Text style={{color:c.ink,fontSize:16,fontWeight:'700',flex:1,paddingRight:12}}>{t('promisesDue',data.promises)}</Text>
+    <Ionicons name="chevron-forward" size={18} color={c.muted}/>
+   </Pressable>:null}
+
+   {quiet?<View style={{borderTopWidth:1,borderBottomWidth:1,borderColor:c.line,paddingVertical:18}}>
+    <Text style={{color:c.muted}}>{t('quietDay')}</Text>
+   </View>:null}
+
+   {!data.total?<Card style={{marginTop:16}}>
+    <Text style={{fontSize:17,fontWeight:'800',color:c.ink}}>{t('emptyHomeTitle')}</Text>
+    <Text style={{color:c.muted,lineHeight:21,marginTop:6}}>{t('emptyHomeBody')}</Text>
+    <Btn label={t('emptyHomeImport')} icon="download-outline" style={{marginTop:14}} onPress={()=>router.push('/contacts/import' as never)}/>
+    <Btn label={t('emptyHomeManual')} variant="outline" style={{marginTop:8}} onPress={()=>router.push('/contacts/form' as never)}/>
+   </Card>:null}
+
+   {data.recent.length?<>
+    <Text accessibilityRole="header" style={{fontSize:20,fontWeight:'800',color:c.ink,marginTop:30,marginBottom:7}}>{t('recentlyAdded')}</Text>
+    {data.recent.map(contact=><ContactRow key={contact.id} contact={contact} onPress={()=>router.push(`/contacts/${contact.id}` as never)}/>)}
+   </>:null}
+
+   {data.total?<View style={{flexDirection:'row',gap:10,marginTop:30}}>
+    {stat(data.total,t('contacts'),()=>router.push('/(tabs)/contacts' as never))}
+    {stat(data.strong,t('statStrong'),()=>router.push('/(tabs)/network' as never))}
+   </View>:null}
+  </>}
+ </ScrollView>;
+}

@@ -1,0 +1,9 @@
+CFBundleDisplayName = "NetworkOS";
+NSContactsUsageDescription = "NetworkOS, siz seçtiğinizde rehberinizdeki kişileri özel ağınıza aktarır ve yalnızca rehber senkronunu açarsanız aktardığınız kişileri güncel tutar. Rehberinizi asla değiştirmez.";
+NSFaceIDUsageDescription = "NetworkOS, gizli ağınızın kilidini açmak için Face ID / Touch ID kullanır.";
+NSCalendarsUsageDescription = "NetworkOS, katılımcıları kişilerinizle eşleştirmek için bu cihazdaki yaklaşan etkinlikleri okur.";
+NSCalendarsFullAccessUsageDescription = "NetworkOS, katılımcıları kişilerinizle eşleştirmek için bu cihazdaki yaklaşan etkinlikleri okur.";
+NSPhotoLibraryUsageDescription = "NetworkOS, fotoğraf arşivinizi yalnızca seçtiğiniz bir kişiye fotoğraf eklemek için kullanır.";
+NSCameraUsageDescription = "NetworkOS, kamerayı yalnızca seçtiğiniz bir kişi için fotoğraf çekmek amacıyla kullanır.";
+NSRemindersUsageDescription = "NetworkOS anımsatıcı oluşturmaz ve okumaz. iOS bunu soruyor çünkü takvim erişimi ile anımsatıcılar aynı sistem izin grubunda.";
+NSRemindersFullAccessUsageDescription = "NetworkOS anımsatıcı oluşturmaz ve okumaz. iOS bunu soruyor çünkü takvim erişimi ile anımsatıcılar aynı sistem izin grubunda.";

@@ -1,2 +1,57 @@
-import {useEffect,useState} from 'react';import {Pressable,ScrollView,Share,Text,View} from 'react-native';import {useRouter} from 'expo-router';import {colors,shadow} from '@/theme';import {ContactRepository} from '@/repositories/ContactRepository';import {NetworkService} from '@/services/NetworkService';import {Contact} from '@/types';import {useTranslation} from '@/i18n';
-export default function Introductions(){const router=useRouter();const {language}=useTranslation();const tr=language==='tr';const [contacts,setContacts]=useState<Contact[]>([]),[from,setFrom]=useState<Contact|null>(null),[to,setTo]=useState<Contact|null>(null),[path,setPath]=useState<string[]|null>(null);useEffect(()=>{void ContactRepository.list().then(setContacts)},[]);const find=async()=>{if(from&&to)setPath(await NetworkService.shortestPath(from.id,to.id,6))};const name=(id:string)=>{const c=contacts.find(x=>x.id===id);return c?.display_name||c?.first_name||id};const message=path?tr?`Merhaba ${name(to!.id)}, seni ${path.slice(1,-1).map(name).join(', ')||'ortak çevremiz'} üzerinden tanıyorum. Tanışmanızın faydalı olacağını düşündüm.`:`Hi ${name(to!.id)}, I know you through ${path.slice(1,-1).map(name).join(', ')||'our shared network'}. I thought it would be useful for you two to connect.`:'';return <ScrollView style={{backgroundColor:colors.paper}} contentContainerStyle={{padding:22,paddingTop:58,paddingBottom:40}}><Pressable onPress={()=>router.back()}><Text style={{color:colors.ink,fontWeight:'800'}}>{tr?'‹ Daha Fazla':'‹ More'}</Text></Pressable><Text style={{fontSize:32,fontWeight:'800',color:colors.ink,marginTop:27}}>{tr?'Tanıştırma motoru':'Introduction engine'}</Text><Text style={{color:colors.muted,fontSize:16,lineHeight:23,marginTop:7,marginBottom:22}}>{tr?'Ağınızdaki en doğal bağlantıyı bulun ve hazır bir tanıştırma mesajı oluşturun.':'Find the most natural path through your network and draft an introduction.'}</Text><Text style={{fontSize:12,fontWeight:'900',color:colors.muted,marginBottom:8}}>{tr?'BAŞLANGIÇ KİŞİSİ':'STARTING PERSON'}</Text><ScrollView horizontal showsHorizontalScrollIndicator={false}>{contacts.map(c=><Pressable key={c.id} onPress={()=>{setFrom(c);setPath(null)}} style={{backgroundColor:from?.id===c.id?colors.teal:colors.card,borderRadius:14,padding:12,marginRight:8}}><Text style={{color:from?.id===c.id?'#fff':colors.ink,fontWeight:'800'}}>{c.display_name||c.first_name}</Text></Pressable>)}</ScrollView><Text style={{fontSize:12,fontWeight:'900',color:colors.muted,marginTop:22,marginBottom:8}}>{tr?'HEDEF KİŞİ':'DESTINATION'}</Text><ScrollView horizontal showsHorizontalScrollIndicator={false}>{contacts.filter(c=>c.id!==from?.id).map(c=><Pressable key={c.id} onPress={()=>{setTo(c);setPath(null)}} style={{backgroundColor:to?.id===c.id?colors.teal:colors.card,borderRadius:14,padding:12,marginRight:8}}><Text style={{color:to?.id===c.id?'#fff':colors.ink,fontWeight:'800'}}>{c.display_name||c.first_name}</Text></Pressable>)}</ScrollView><Pressable disabled={!from||!to} onPress={()=>void find()} style={{backgroundColor:from&&to?colors.coral:colors.line,borderRadius:15,padding:17,marginTop:24}}><Text style={{color:from&&to?'#fff':colors.muted,fontWeight:'800',textAlign:'center'}}>{tr?'Bağlantıyı bul':'Find connection'}</Text></Pressable>{path&&<View style={{backgroundColor:colors.card,borderRadius:18,padding:18,marginTop:18,...shadow}}><Text style={{fontSize:12,fontWeight:'900',color:colors.coral}}>{path.length===2?(tr?'DOĞRUDAN BAĞLANTI':'DIRECT CONNECTION'):(tr?'EN KISA YOL':'SHORTEST PATH')}</Text><Text style={{color:colors.ink,fontSize:17,fontWeight:'800',lineHeight:26,marginTop:8}}>{path.map(name).join('  →  ')}</Text><Text style={{color:colors.muted,lineHeight:21,marginTop:14}}>{message}</Text><Pressable onPress={()=>void Share.share({message})} style={{backgroundColor:colors.teal,borderRadius:13,padding:15,marginTop:14}}><Text style={{color:'#fff',fontWeight:'800',textAlign:'center'}}>{tr?'Mesajı paylaş':'Share message'}</Text></Pressable></View>}{path===null&&from&&to&&<Text style={{color:colors.muted,marginTop:20}}>{tr?'Bu iki kişi arasında altı derece içinde bağlantı bulunamadı.':'No connection found within six degrees.'}</Text>}</ScrollView>}
+import {useState} from 'react';
+import {Share,Text} from 'react-native';
+import {useRouter} from 'expo-router';
+import {Contact} from '@/types';
+import {NetworkService} from '@/services/NetworkService';
+import {contactName} from '@/components/ContactRow';
+import {ContactSelect} from '@/components/ContactSelect';
+import {BackLink,Btn,Card,ScreenScroll,Subtitle,Title} from '@/components/ui';
+import {useTheme} from '@/theme';
+import {useTranslation} from '@/i18n';
+
+export default function Introductions(){
+ const router=useRouter();
+ const {t}=useTranslation();
+ const {c}=useTheme();
+ const [from,setFrom]=useState<Contact|null>(null);
+ const [to,setTo]=useState<Contact|null>(null);
+ const [path,setPath]=useState<string[]|null>(null);
+ const [names,setNames]=useState<Record<string,string>>({});
+ const [searched,setSearched]=useState(false);
+
+ const find=async()=>{
+  if(!from||!to)return;
+  setSearched(true);
+  const found=await NetworkService.shortestPath(from.id,to.id,6);
+  setPath(found);
+  if(found)setNames(await NetworkService.namesFor(found));
+ };
+
+ // The path can run through people who are not on screen, so names come from the fetched chain.
+ const nameOf=(id:string)=>names[id]??id;
+ const via=path&&path.length>2?path.slice(1,-1).map(nameOf).join(', '):t('introVia');
+ const message=path&&to?t('introMessage',contactName(to),via):'';
+
+ return <ScreenScroll>
+  <BackLink label={t('backMore')} onPress={()=>router.back()}/>
+  <Title>{t('introductions')}</Title>
+  <Subtitle>{t('introductionsSubtitle')}</Subtitle>
+
+  <Card tone="sage">
+   <Text style={{color:c.ink,fontWeight:'800'}}>{t('introSuggestionsTitle')}</Text>
+   <Btn label={t('insights')} variant="ghost" style={{marginTop:12}} onPress={()=>router.push('/insights' as never)}/>
+  </Card>
+
+  <ContactSelect label={t('startingPerson')} value={from} onChange={contact=>{setFrom(contact);setPath(null);setSearched(false)}}/>
+  <ContactSelect label={t('destinationPerson')} value={to} exclude={from?.id} onChange={contact=>{setTo(contact);setPath(null);setSearched(false)}}/>
+
+  <Btn label={t('findConnection')} disabled={!from||!to} style={{marginTop:24}} onPress={()=>void find()}/>
+
+  {path?<Card style={{marginTop:18}}>
+   <Text style={{fontSize:12,fontWeight:'900',color:c.coral}}>{path.length===2?t('directConnection'):t('shortestPath')}</Text>
+   <Text style={{color:c.ink,fontSize:17,fontWeight:'800',lineHeight:26,marginTop:8}}>{path.map(nameOf).join('  →  ')}</Text>
+   <Text style={{color:c.muted,lineHeight:21,marginTop:14}}>{message}</Text>
+   <Btn label={t('shareMessage')} variant="ghost" style={{marginTop:14}} onPress={()=>void Share.share({message})}/>
+  </Card>:searched?<Text style={{color:c.muted,marginTop:20}}>{t('noConnectionSix')}</Text>:null}
+ </ScreenScroll>;
+}

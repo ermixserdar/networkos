@@ -1,2 +1,76 @@
-import {useEffect,useState} from 'react';import {Alert,FlatList,Pressable,Text,View} from 'react-native';import {useRouter} from 'expo-router';import {colors,shadow} from '@/theme';import {ContactRepository} from '@/repositories/ContactRepository';import {SelectiveShareService} from '@/services/SelectiveShareService';import {Contact} from '@/types';import {useTranslation} from '@/i18n';
-export default function ShareContacts(){const router=useRouter();const {language}=useTranslation();const tr=language==='tr';const [contacts,setContacts]=useState<Contact[]>([]),[selected,setSelected]=useState<string[]>([]),[sharing,setSharing]=useState(false);useEffect(()=>{void ContactRepository.list().then(setContacts)},[]);const copy=tr?{title:'Güvenli paylaşım',subtitle:'Yalnızca seçtiğiniz kişileri şifreli olarak paylaşın.',action:'Şifreli dosyayı paylaş',empty:'Paylaşılacak kişi yok.',back:'‹ Daha Fazla',done:'Paylaşım hazırlandı',failed:'Paylaşım hazırlanamadı'}:{title:'Secure sharing',subtitle:'Share only the people you choose in an encrypted file.',action:'Share encrypted file',empty:'No contacts to share.',back:'‹ More',done:'Share file ready',failed:'Could not prepare share'};const toggle=(id:string)=>setSelected(x=>x.includes(id)?x.filter(y=>y!==id):[...x,id]);const share=async()=>{setSharing(true);try{await SelectiveShareService.shareContacts(selected);Alert.alert(copy.done)}catch{Alert.alert(copy.failed)}finally{setSharing(false)}};return <View style={{flex:1,backgroundColor:colors.paper,padding:22,paddingTop:58}}><Pressable onPress={()=>router.back()}><Text style={{color:colors.ink,fontWeight:'800'}}>{copy.back}</Text></Pressable><Text style={{fontSize:32,fontWeight:'800',color:colors.ink,marginTop:27}}>{copy.title}</Text><Text style={{color:colors.muted,fontSize:16,lineHeight:23,marginTop:7,marginBottom:20}}>{copy.subtitle}</Text><FlatList data={contacts} keyExtractor={x=>x.id} contentContainerStyle={{paddingBottom:90}} ListEmptyComponent={<Text style={{color:colors.muted,textAlign:'center',marginTop:28}}>{copy.empty}</Text>} renderItem={({item})=>{const checked=selected.includes(item.id);return <Pressable onPress={()=>toggle(item.id)} style={{backgroundColor:checked?colors.sage:colors.card,borderRadius:16,padding:15,marginBottom:9,flexDirection:'row',alignItems:'center'}}><View style={{width:25,height:25,borderRadius:8,borderWidth:2,borderColor:checked?colors.teal:colors.line,backgroundColor:checked?colors.teal:'transparent',alignItems:'center',justifyContent:'center'}}>{checked&&<Text style={{color:'#fff'}}>✓</Text>}</View><Text style={{marginLeft:12,color:colors.ink,fontSize:16,fontWeight:'800'}}>{item.display_name||item.first_name}</Text></Pressable>}}/><Pressable disabled={!selected.length||sharing} onPress={()=>void share()} style={{position:'absolute',left:22,right:22,bottom:22,backgroundColor:selected.length?colors.coral:colors.line,borderRadius:16,padding:18,...shadow}}><Text style={{color:selected.length?'#fff':colors.muted,textAlign:'center',fontWeight:'800'}}>{copy.action} ({selected.length})</Text></Pressable></View>}
+import {useState} from 'react';
+import {Alert,FlatList,Text} from 'react-native';
+import {useRouter} from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
+import {useContacts} from '@/hooks/useContacts';
+import {ShareService} from '@/services/ShareService';
+import {WrongKeyError} from '@/services/BackupService';
+import {contactName} from '@/components/ContactRow';
+import {BackLink,Btn,Card,Checkbox,Empty,Field,Loading,Screen,SectionLabel,Subtitle,Title} from '@/components/ui';
+import {useTheme} from '@/theme';
+import {useTranslation} from '@/i18n';
+
+export default function ShareContacts(){
+ const router=useRouter();
+ const {t}=useTranslation();
+ const {c}=useTheme();
+ const [query,setQuery]=useState('');
+ const {contacts,total,loadMore,hasMore}=useContacts({q:query});
+ const [selected,setSelected]=useState<string[]>([]);
+ const [code,setCode]=useState<string|null>(null);
+ const [incomingCode,setIncomingCode]=useState('');
+ const [busy,setBusy]=useState(false);
+
+ const toggle=(id:string)=>setSelected(current=>current.includes(id)?current.filter(x=>x!==id):[...current,id]);
+
+ const send=async()=>{
+  setBusy(true);
+  try{
+   const result=await ShareService.shareContacts(selected);
+   setCode(result.code);
+  }catch{Alert.alert(t('shareFailed'))}
+  finally{setBusy(false)}
+ };
+
+ const receive=async()=>{
+  if(!incomingCode.trim())return;
+  setBusy(true);
+  try{
+   const result=await ShareService.receiveContacts(incomingCode);
+   if(result)Alert.alert(t('importedContacts',result.applied));
+  }catch(error){
+   Alert.alert(error instanceof WrongKeyError?t('wrongKeyTitle'):t('shareFailed'),error instanceof WrongKeyError?t('wrongKeyBody'):undefined);
+  }finally{setBusy(false)}
+ };
+
+ return <Screen>
+  <BackLink label={t('backMore')} onPress={()=>router.back()}/>
+  <Title>{t('secureSharing')}</Title>
+  <Subtitle>{t('secureSharingSubtitle')}</Subtitle>
+
+  {code?<Card tone="coral" style={{marginBottom:14}}>
+   <Text style={{fontSize:12,fontWeight:'900',color:c.coralInk}}>{t('shareCodeTitle').toUpperCase()}</Text>
+   <Text selectable style={{color:c.ink,fontSize:22,fontWeight:'800',letterSpacing:2,marginTop:8}}>{code}</Text>
+   <Text style={{color:c.muted,marginTop:8,lineHeight:20}}>{t('shareCodeBody')}</Text>
+   <Btn label={t('copyCode')} variant="outline" style={{marginTop:12}} onPress={async()=>{await Clipboard.setStringAsync(code);Alert.alert(t('codeCopied'))}}/>
+  </Card>:null}
+
+  <Field label={t('searchNetwork')} hint={t('findPerson')} value={query} onChangeText={setQuery}/>
+  <FlatList data={contacts} keyExtractor={x=>x.id} contentContainerStyle={{paddingBottom:16}} style={{maxHeight:300}}
+   onEndReachedThreshold={0.4} onEndReached={()=>{void loadMore()}}
+   ListEmptyComponent={<Empty>{query?t('noMatches'):t('noContactsToShare')}</Empty>}
+   ListFooterComponent={hasMore?<Loading/>:null}
+   renderItem={({item})=><Checkbox checked={selected.includes(item.id)} label={contactName(item)} onPress={()=>toggle(item.id)}/>}/>
+  {/* Selection survives filtering, so the count is the honest total rather than what is on screen. */}
+  <Text style={{color:c.muted,fontSize:12,marginBottom:8}}>{t('peopleCount',total)}</Text>
+
+  <Btn label={`${t('shareAction')} (${selected.length})`} busy={busy} disabled={!selected.length} onPress={()=>void send()}/>
+
+  <SectionLabel style={{marginTop:26}}>{t('receiveTitle').toUpperCase()}</SectionLabel>
+  <Card>
+   <Text style={{color:c.muted,lineHeight:20,marginBottom:12}}>{t('receiveBody')}</Text>
+   <Field label={t('enterShareCode')} value={incomingCode} onChangeText={setIncomingCode} autoCapitalize="characters" autoCorrect={false}/>
+   <Btn label={t('receiveAction')} variant="outline" busy={busy} disabled={!incomingCode.trim()} onPress={()=>void receive()}/>
+  </Card>
+ </Screen>;
+}

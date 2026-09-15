@@ -1,2 +1,78 @@
-import * as FileSystem from 'expo-file-system/legacy';import * as Sharing from 'expo-sharing';import * as DocumentPicker from 'expo-document-picker';import nacl from 'tweetnacl';import {getDatabase,getDatabaseKey} from '@/database/database';type ExportPayload={exported_at:number;version:1;tables:Record<string,unknown[]>};export const BACKUP_TABLES=['owner_profile','contacts','companies','relationships','interactions','tags','contact_tags','commitments','events','event_contacts'] as const;export const CSV_UNENCRYPTED_WARNING='CSV export is NOT encrypted. Anyone with the file can read it.';const CHUNK=8192;const b64=(bytes:Uint8Array)=>{let s='';for(let i=0;i<bytes.length;i+=CHUNK)s+=String.fromCharCode(...bytes.subarray(i,i+CHUNK));return btoa(s);};const bytes=(value:string)=>Uint8Array.from(atob(value),c=>c.charCodeAt(0));const secret=async()=>nacl.hash(new TextEncoder().encode(await getDatabaseKey())).slice(0,32);
-export const BackupService={collect:async():Promise<ExportPayload>=>{const d=await getDatabase();const result:Record<string,unknown[]>={};for(const table of BACKUP_TABLES)result[table]=await d.getAllAsync(`SELECT * FROM ${table}`);return {exported_at:Date.now(),version:1,tables:result}},shareJson:async()=>{const message=new TextEncoder().encode(JSON.stringify(await BackupService.collect()));const nonce=nacl.randomBytes(nacl.secretbox.nonceLength);const box=nacl.secretbox(message,nonce,await secret());const uri=`${FileSystem.documentDirectory}networkos-backup-${new Date().toISOString().slice(0,10)}.networkos`;await FileSystem.writeAsStringAsync(uri,`NETWORKOS1.${b64(nonce)}.${b64(box)}`);if(await Sharing.isAvailableAsync())await Sharing.shareAsync(uri,{dialogTitle:'Export encrypted NetworkOS backup',mimeType:'application/octet-stream'});return uri},shareCsv:async()=>{const payload=await BackupService.collect();const contacts=(payload.tables.contacts??[]) as Record<string,unknown>[];const keys=['first_name','last_name','display_name','job_title','email','phone','city','country','relationship_strength','importance','notes'];const csv=[keys.join(','),...contacts.map(row=>keys.map(k=>`"${String(row[k]??'').replace(/"/g,'""')}"`).join(','))].join('\n');const uri=`${FileSystem.documentDirectory}networkos-contacts-${new Date().toISOString().slice(0,10)}.csv`;await FileSystem.writeAsStringAsync(uri,csv);if(await Sharing.isAvailableAsync())await Sharing.shareAsync(uri,{dialogTitle:'Export NetworkOS contacts',mimeType:'text/csv'});return uri},restoreMerge:async()=>{const picked=await DocumentPicker.getDocumentAsync({type:['application/octet-stream','application/json'],copyToCacheDirectory:true,multiple:false});if(picked.canceled||!picked.assets?.[0])return false;const parts=(await FileSystem.readAsStringAsync(picked.assets[0].uri)).split('.');if(parts.length!==3||parts[0]!=='NETWORKOS1')throw Error('Unsupported NetworkOS backup');const message=nacl.secretbox.open(bytes(parts[2]),bytes(parts[1]),await secret());if(!message)throw Error('Backup authentication failed');const raw=JSON.parse(new TextDecoder().decode(message)) as ExportPayload;if(raw.version!==1||!raw.tables)throw Error('Unsupported NetworkOS backup');const d=await getDatabase();await d.withTransactionAsync(async()=>{for(const row of (raw.tables.companies??[]) as any[])await d.runAsync('INSERT OR IGNORE INTO companies(id,name,website,industry,city,country,description,created_at,updated_at,deleted_at,sync_status,version) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',row.id,row.name,row.website??null,row.industry??null,row.city??null,row.country??null,row.description??null,row.created_at,row.updated_at,row.deleted_at??null,row.sync_status??'local',row.version??1);for(const row of (raw.tables.contacts??[]) as any[])await d.runAsync('INSERT OR IGNORE INTO contacts(id,first_name,last_name,display_name,job_title,company_id,email,phone,linkedin_url,website,city,country,birthday,relationship_strength,importance,how_we_met,met_at,met_date,notes,last_contact_at,next_follow_up_at,favorite,created_at,updated_at,deleted_at,sync_status,version) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',row.id,row.first_name,row.last_name??null,row.display_name??null,row.job_title??null,row.company_id??null,row.email??null,row.phone??null,row.linkedin_url??null,row.website??null,row.city??null,row.country??null,row.birthday??null,row.relationship_strength??3,row.importance??3,row.how_we_met??null,row.met_at??null,row.met_date??null,row.notes??null,row.last_contact_at??null,row.next_follow_up_at??null,row.favorite??0,row.created_at,row.updated_at,row.deleted_at??null,row.sync_status??'local',row.version??1);for(const row of (raw.tables.relationships??[]) as any[])await d.runAsync('INSERT OR IGNORE INTO relationships(id,contact_a_id,contact_b_id,relationship_type,strength,context,notes,created_at,updated_at,deleted_at,sync_status,version) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',row.id,row.contact_a_id,row.contact_b_id,row.relationship_type??null,row.strength??3,row.context??null,row.notes??null,row.created_at,row.updated_at,row.deleted_at??null,row.sync_status??'local',row.version??1);for(const row of (raw.tables.interactions??[]) as any[])await d.runAsync('INSERT OR IGNORE INTO interactions(id,contact_id,type,title,description,interaction_at,created_at,updated_at,deleted_at,sync_status,version) VALUES(?,?,?,?,?,?,?,?,?,?,?)',row.id,row.contact_id,row.type,row.title??null,row.description??null,row.interaction_at,row.created_at,row.updated_at,row.deleted_at??null,row.sync_status??'local',row.version??1);for(const row of (raw.tables.tags??[]) as any[])await d.runAsync('INSERT OR IGNORE INTO tags(id,name,created_at,updated_at,deleted_at,sync_status,version) VALUES(?,?,?,?,?,?,?)',row.id,row.name,row.created_at,row.updated_at,row.deleted_at??null,row.sync_status??'local',row.version??1);for(const row of (raw.tables.contact_tags??[]) as any[])await d.runAsync('INSERT OR IGNORE INTO contact_tags(contact_id,tag_id) VALUES(?,?)',row.contact_id,row.tag_id);for(const row of (raw.tables.commitments??[]) as any[])await d.runAsync('INSERT OR IGNORE INTO commitments(id,contact_id,text,due_at,completed_at,created_at,updated_at,deleted_at) VALUES(?,?,?,?,?,?,?,?)',row.id,row.contact_id,row.text,row.due_at??null,row.completed_at??null,row.created_at,row.updated_at,row.deleted_at??null);for(const row of (raw.tables.events??[]) as any[])await d.runAsync('INSERT OR IGNORE INTO events(id,name,event_at,location,notes,created_at,updated_at,deleted_at) VALUES(?,?,?,?,?,?,?,?)',row.id,row.name,row.event_at,row.location??null,row.notes??null,row.created_at,row.updated_at,row.deleted_at??null);for(const row of (raw.tables.event_contacts??[]) as any[])await d.runAsync('INSERT OR IGNORE INTO event_contacts(event_id,contact_id) VALUES(?,?)',row.event_id,row.contact_id)});return true}};
+import {getDatabase,getDatabaseKey} from '@/database/database';
+import {EnvelopeError,isChunked,open,openChunks,sealChunks} from '@/utils/crypto';
+import {EnvelopeFile} from '@/services/EnvelopeFile';
+import {translate} from '@/i18n';
+import {useAppStore} from '@/stores/useAppStore';
+import {RecoveryKeyService} from '@/services/RecoveryKeyService';
+import {Snapshot,SnapshotService,BACKUP_TABLES} from '@/services/SnapshotService';
+import type {SnapshotTable} from '@/services/SnapshotService';
+
+export {BACKUP_TABLES};
+export const CSV_UNENCRYPTED_WARNING='CSV export is NOT encrypted. Anyone with the file can read it.';
+
+const CSV_KEYS=['first_name','last_name','display_name','job_title','email','phone','city','country','birthday','relationship_strength','importance','notes'];
+
+export class WrongKeyError extends Error{constructor(){super('Wrong recovery key')}}
+
+export const BackupService={
+ collect:()=>SnapshotService.collect(),
+
+ /** Encrypted with the recovery key, so it can be opened on a device this one has never met. */
+ shareJson:async()=>{
+  const envelope=await BackupService.buildEnvelope(await RecoveryKeyService.get());
+  const uri=await EnvelopeFile.write('networkos-backup',envelope);
+  return EnvelopeFile.share(uri,translate(useAppStore.getState().language)('shareBackupTitle'));
+ },
+
+ /** Seals table by table; the whole database is never a single string in memory. */
+ buildEnvelope:async(secret:string,extra:Record<string,unknown>={})=>{
+  const encoder=new TextEncoder();
+  const chunks:Record<string,Uint8Array>={
+   __meta:encoder.encode(JSON.stringify({exported_at:Date.now(),version:3,...extra})),
+  };
+  for(const table of SnapshotService.tables())
+   chunks[table]=encoder.encode(JSON.stringify(await SnapshotService.collectTable(table)));
+  return sealChunks(chunks,secret);
+ },
+
+ shareCsv:async()=>{
+  const d=await getDatabase();
+  // Plain text leaving the device never includes the vault, even when it is unlocked.
+  const rows=await d.getAllAsync<Record<string,unknown>>(`SELECT ${CSV_KEYS.join(',')} FROM contacts WHERE deleted_at IS NULL AND private=0 ORDER BY first_name COLLATE NOCASE`);
+  const cell=(value:unknown)=>`"${String(value??'').replace(/"/g,'""')}"`;
+  const csv=[CSV_KEYS.join(','),...rows.map(row=>CSV_KEYS.map(k=>cell(k==='birthday'&&row[k]?new Date(Number(row[k])).toISOString().slice(0,10):row[k])).join(','))].join('\n');
+  const uri=await EnvelopeFile.write('networkos-contacts',csv,'csv');
+  return EnvelopeFile.share(uri,translate(useAppStore.getState().language)('shareCsvTitle'),'text/csv');
+ },
+
+ /**
+  * Reads a v2 envelope with the supplied (or stored) recovery key, and still opens a legacy v1
+  * envelope with this device's database key so backups taken before the change are not stranded.
+  */
+ readEnvelope:async(envelope:string,secret?:string):Promise<Snapshot>=>{
+  const key=secret??await RecoveryKeyService.get();
+  const decoder=new TextDecoder();
+  try{
+   if(isChunked(envelope)){
+    const chunks=openChunks(envelope,key);
+    const meta=chunks.__meta?JSON.parse(decoder.decode(chunks.__meta)):{};
+    const tables:Record<string,SnapshotTable>={};
+    for(const [name,bytes] of Object.entries(chunks))if(name!=='__meta')tables[name]=JSON.parse(decoder.decode(bytes));
+    return {exported_at:Number(meta.exported_at)||Date.now(),version:3,device_id:meta.device_id,tables};
+   }
+   const parsed=JSON.parse(decoder.decode(open(envelope,key,await getDatabaseKey()))) as Snapshot;
+   if(!parsed?.tables||(parsed.version!==1&&parsed.version!==2))throw Error('Unsupported NetworkOS backup');
+   return parsed;
+  }catch(error){
+   if(error instanceof EnvelopeError&&error.reason==='auth')throw new WrongKeyError();
+   throw error;
+  }
+ },
+
+ restoreMerge:async(secret?:string)=>{
+  const contents=await EnvelopeFile.pick();
+  if(!contents)return null;
+  const snapshot=await BackupService.readEnvelope(contents,secret);
+  return SnapshotService.merge(snapshot);
+ },
+};
