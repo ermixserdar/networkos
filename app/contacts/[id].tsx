@@ -9,11 +9,13 @@ import {CommitmentRepository} from '@/repositories/CommitmentRepository';
 import {RelationshipEdge,RelationshipRepository} from '@/repositories/RelationshipRepository';
 import {TagRepository} from '@/repositories/TagRepository';
 import {FollowUpService} from '@/services/FollowUpService';
+import {ReminderPlanner} from '@/services/ReminderPlanner';
 import {NetworkService} from '@/services/NetworkService';
 import {howWeMetText} from '@/services/ContactsImportService';
+import {useAppStore} from '@/stores/useAppStore';
 import {Avatar} from '@/components/Avatar';
 import {contactName} from '@/components/ContactRow';
-import {BackLink,Btn,Card,Chip,SectionLabel,useFocusRefresh} from '@/components/ui';
+import {BackLink,Btn,Card,Chip,SectionLabel,useFocusRefresh,useGoBack} from '@/components/ui';
 import {HIT,hitSlop,radius,shadow,useTheme} from '@/theme';
 import {ageOn,formatDate,nextAnniversary,relativeDate,relativeFuture} from '@/utils/format';
 import {useTranslation} from '@/i18n';
@@ -28,26 +30,40 @@ const EMPTY:Detail={contact:null,interactions:[],commitments:[],edges:[],tags:[]
 export default function Profile(){
  const {id}=useLocalSearchParams<{id:string}>();
  const [detail,setDetail]=useState<Detail>(EMPTY);
+ const [loaded,setLoaded]=useState(false);
  const router=useRouter();
+ const goBack=useGoBack('/(tabs)/contacts');
  const {t,language}=useTranslation();
  const {c}=useTheme();
+ const showToast=useAppStore(s=>s.showToast);
 
  const load=useCallback(async()=>{
-  const contact=await ContactRepository.get(id);
-  if(!contact){setDetail(EMPTY);return}
-  const [interactions,commitments,edges,tags,balance]=await Promise.all([
-   InteractionRepository.listForContact(id),
-   CommitmentRepository.list({contactId:id,openOnly:true}),
-   RelationshipRepository.listForContact(id),
-   TagRepository.forContact(id),
-   CommitmentRepository.balance(id),
-  ]);
-  setDetail({contact,interactions,commitments,edges,tags,balance});
+  try{
+   const contact=await ContactRepository.get(id);
+   if(!contact){setDetail(EMPTY);return}
+   const [interactions,commitments,edges,tags,balance]=await Promise.all([
+    InteractionRepository.listForContact(id),
+    CommitmentRepository.list({contactId:id,openOnly:true}),
+    RelationshipRepository.listForContact(id),
+    TagRepository.forContact(id),
+    CommitmentRepository.balance(id),
+   ]);
+   setDetail({contact,interactions,commitments,edges,tags,balance});
+  }finally{setLoaded(true)}
  },[id]);
  useFocusRefresh(load);
 
  const {contact}=detail;
- if(!contact)return <View style={{flex:1,backgroundColor:c.paper}}/>;
+ if(!loaded)return <View style={{flex:1,backgroundColor:c.paper}}/>;
+ if(!contact)return <View style={{flex:1,backgroundColor:c.paper,padding:20,paddingTop:58}}>
+  <BackLink label={t('backPeople')} onPress={goBack}/>
+  <View style={{flex:1,alignItems:'center',justifyContent:'center',paddingBottom:90}}>
+   <Ionicons name="person-outline" size={46} color={c.muted}/>
+   <Text accessibilityRole="header" style={{fontSize:23,fontWeight:'800',color:c.ink,marginTop:18}}>{t('personNotFound')}</Text>
+   <Text style={{color:c.muted,marginTop:9,textAlign:'center',lineHeight:22,paddingHorizontal:24}}>{t('personNotFoundBody')}</Text>
+   <Btn label={t('backPeople')} variant="outline" style={{marginTop:22}} onPress={goBack}/>
+  </View>
+ </View>;
 
  const name=contactName(contact);
  const health=NetworkService.health(contact);
@@ -62,9 +78,20 @@ export default function Profile(){
   if(days)await FollowUpService.set(contact.id,(contact.last_contact_at??Date.now())+days*DAY);
   await load();
  };
+ const doDelete=async()=>{
+  const name=contactName(contact);
+  await ContactRepository.remove(contact.id);
+  // The deleted follow-up must not keep pinging, and the toast gives five seconds to take it back.
+  await ReminderPlanner.reconcile();
+  showToast({message:t('deletedPerson',name),actionLabel:t('undoDelete'),action:async()=>{
+   await ContactRepository.restore(contact.id);
+   await ReminderPlanner.reconcile();
+  }});
+  router.back();
+ };
  const confirmDelete=()=>Alert.alert(t('deletePersonConfirm'),t('deletePersonBody'),[
   {text:t('cancel'),style:'cancel'},
-  {text:t('delete'),style:'destructive',onPress:async()=>{await ContactRepository.remove(contact.id);router.back()}},
+  {text:t('delete'),style:'destructive',onPress:()=>void doDelete()},
  ]);
 
  const reach=[
@@ -74,6 +101,7 @@ export default function Profile(){
  ].filter(Boolean) as {icon:'call-outline';label:string;url:string}[];
 
  const birthdayAt=contact.birthday?nextAnniversary(contact.birthday):null;
+ const metAnniversaryAt=contact.met_date&&contact.met_date<=Date.now()?nextAnniversary(contact.met_date):null;
 
  return <ScrollView style={{backgroundColor:c.paper}} contentContainerStyle={{padding:20,paddingTop:58,paddingBottom:44}}>
   <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
@@ -160,6 +188,13 @@ export default function Profile(){
    </Text>
   </Card>:null}
 
+  {metAnniversaryAt?<Card style={{marginTop:12}} tone="sage">
+   <Text style={{color:c.teal,fontSize:12,fontWeight:'900'}}>{t('metAnniversary').toUpperCase()}</Text>
+   <Text style={{color:c.ink,fontWeight:'800',marginTop:6}}>
+    {formatDate(contact.met_date,language)} · {t('birthdayIn',Math.max(0,Math.round((metAnniversaryAt-Date.now())/DAY)))} · {t('metYears',ageOn(contact.met_date!,metAnniversaryAt))}
+   </Text>
+  </Card>:null}
+
   <SectionLabel style={{marginTop:24}}>{t('promisesSection').toUpperCase()}</SectionLabel>
   <Card>
    <Text style={{color:c.ink,fontWeight:'800'}}>
@@ -188,6 +223,14 @@ export default function Profile(){
    {contact.met_at?<Text style={{color:c.muted,marginTop:4}}>{t('metAtLabel')}: {contact.met_at}</Text>:null}
    {contact.met_date?<Text style={{color:c.muted,marginTop:4}}>{t('metDateLabel')}: {formatDate(contact.met_date,language)}</Text>:null}
   </Card>
+
+  {detail.interactions.length?<Card style={{marginTop:24}}>
+   <Text style={{fontSize:12,fontWeight:'900',color:c.muted}}>{t('lastInteractionsLabel').toUpperCase()}</Text>
+   {detail.interactions.slice(0,3).map(item=><View key={item.id} style={{marginTop:10}}>
+    <Text style={{color:c.ink,fontWeight:'800'}}>{item.title||t(`type_${item.type}` as never)}</Text>
+    <Text style={{color:c.muted,fontSize:12,marginTop:3}}>{relativeDate(item.interaction_at,language)}</Text>
+   </View>)}
+  </Card>:null}
 
   <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:26,marginBottom:10}}>
    <Text accessibilityRole="header" style={{fontSize:21,fontWeight:'800',color:c.ink}}>{t('timeline')}</Text>

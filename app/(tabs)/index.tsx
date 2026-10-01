@@ -10,13 +10,15 @@ import {NotificationService} from '@/services/NotificationService';
 import {ContactRow} from '@/components/ContactRow';
 import {Btn,Card,ErrorNote,Loading,useFocusRefresh,useTopInset} from '@/components/ui';
 import {HIT,hitSlop,radius,shadow,spacing,useTheme} from '@/theme';
-import {nextAnniversary,relativeFuture} from '@/utils/format';
+import {ageOn,nextAnniversary,relativeFuture} from '@/utils/format';
 import {useTranslation} from '@/i18n';
 
 type Birthday={contact:Contact;at:number};
-type HomeData={total:number;strong:number;due:Contact[];promises:number;birthdays:Birthday[];recent:Contact[]};
-const EMPTY:HomeData={total:0,strong:0,due:[],promises:0,birthdays:[],recent:[]};
+type Anniversary={contact:Contact;at:number};
+type HomeData={total:number;strong:number;due:Contact[];promises:number;birthdays:Birthday[];anniversaries:Anniversary[];recent:Contact[]};
+const EMPTY:HomeData={total:0,strong:0,due:[],promises:0,birthdays:[],anniversaries:[],recent:[]};
 const WEEK=7*86400000;
+const MONTH=30*86400000;
 
 /**
  * Home is the day's work, not a dashboard: what is due leads, the totals follow. Nothing here is
@@ -32,13 +34,14 @@ export default function Home(){
 
  const load=useCallback(async()=>{
   try{
-   const [stats,overdue,today,recent,promises,withBirthday]=await Promise.all([
+   const [stats,overdue,today,recent,promises,withBirthday,withMet]=await Promise.all([
     ContactRepository.stats(),
     FollowUpService.list('overdue'),
     FollowUpService.list('today'),
     ContactRepository.list({limit:4,order:'recent'}),
     CommitmentRepository.dueCount(),
     ContactRepository.withBirthday(),
+    ContactRepository.withMetDate(),
    ]);
    const now=Date.now();
    const birthdays=withBirthday
@@ -46,7 +49,12 @@ export default function Home(){
     .filter(item=>item.at-now<=WEEK)
     .sort((a,b)=>a.at-b.at)
     .slice(0,3);
-   setData({total:stats.total,strong:stats.strong,due:[...overdue,...today],promises,birthdays,recent});
+   const anniversaries=withMet
+    .map(contact=>({contact,at:nextAnniversary(contact.met_date!,now)}))
+    .filter(item=>item.at-now<=MONTH)
+    .sort((a,b)=>a.at-b.at)
+    .slice(0,3);
+   setData({total:stats.total,strong:stats.strong,due:[...overdue,...today],promises,birthdays,anniversaries,recent});
    setState('ready');
    // Keep the weekly summary honest about the week it is actually sent in.
    void NotificationService.refreshDigest({cooling:overdue.length,due:promises});
@@ -76,7 +84,7 @@ export default function Home(){
   <Text style={{fontSize:12,color:c.muted,marginTop:4}}>{label}</Text>
  </Pressable>;
 
- const quiet=!data.due.length&&!data.birthdays.length&&!data.promises;
+ const quiet=!data.due.length&&!data.birthdays.length&&!data.anniversaries.length&&!data.promises;
 
  return <ScrollView style={{flex:1,backgroundColor:c.paper}} contentContainerStyle={{padding:spacing.lg,paddingTop:top,paddingBottom:40}}>
   <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
@@ -111,6 +119,13 @@ export default function Home(){
     <ContactRow contact={item.contact} onPress={()=>router.push(`/contacts/${item.contact.id}` as never)}
      trailing={<Ionicons name="gift-outline" size={18} color={c.onSage}/>}/>
     <Text style={{color:c.muted,fontSize:12,fontWeight:'800',marginTop:5}}>{t('birthdayLabel')} · {t('birthdayIn',Math.max(0,Math.round((item.at-Date.now())/86400000)))}</Text>
+   </Pressable>)}
+
+   {data.anniversaries.map(item=><Pressable key={item.contact.id} accessibilityRole="button" onPress={()=>router.push(`/contacts/${item.contact.id}` as never)}
+    style={{backgroundColor:c.card,borderRadius:radius.lg,padding:15,marginBottom:9,minHeight:HIT}}>
+    <ContactRow contact={item.contact} onPress={()=>router.push(`/contacts/${item.contact.id}` as never)}
+     trailing={<Ionicons name="calendar-outline" size={18} color={c.onSage}/>}/>
+    <Text style={{color:c.muted,fontSize:12,fontWeight:'800',marginTop:5}}>{t('metAnniversary')} · {t('birthdayIn',Math.max(0,Math.round((item.at-Date.now())/86400000)))} · {t('metYears',ageOn(item.contact.met_date!,item.at))}</Text>
    </Pressable>)}
 
    {data.promises?<Pressable accessibilityRole="button" accessibilityLabel={t('promisesDue',data.promises)} onPress={()=>router.push('/commitments' as never)}

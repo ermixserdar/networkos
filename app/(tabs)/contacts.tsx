@@ -5,7 +5,7 @@ import {Tag} from '@/types';
 import {useContacts} from '@/hooks/useContacts';
 import {TagRepository} from '@/repositories/TagRepository';
 import {ContactRow} from '@/components/ContactRow';
-import {Chip,Empty,Loading,useFocusRefresh} from '@/components/ui';
+import {Btn,Chip,Empty,ErrorNote,Loading,useFocusRefresh} from '@/components/ui';
 import {HIT,radius,useTheme} from '@/theme';
 import {useTranslation} from '@/i18n';
 
@@ -13,7 +13,7 @@ export default function Contacts(){
  const [q,setQ]=useState('');
  const [tagId,setTagId]=useState<string|undefined>();
  const [tags,setTags]=useState<Tag[]>([]);
- const {contacts,total,loading,loadMore,hasMore}=useContacts({q,tagId});
+ const {contacts,total,loading,error,refresh,loadMore,hasMore}=useContacts({q,tagId});
  const router=useRouter();
  const {t}=useTranslation();
  const {c}=useTheme();
@@ -30,14 +30,14 @@ export default function Contacts(){
    style={{marginTop:12,flexGrow:0}} contentContainerStyle={{gap:8,paddingRight:12}}
    renderItem={({item})=><Chip label={item.name} selected={(item.id||undefined)===tagId} onPress={()=>setTagId(item.id||undefined)}/>}/>:null}
 
-  {loading&&!contacts.length?<Loading/>:<FlatList
+  {loading&&!contacts.length?<Loading/>:error&&!contacts.length?<ErrorNote onRetry={()=>void refresh()}/>:<FlatList
    data={contacts}
    keyExtractor={x=>x.id}
    style={{marginTop:12}}
    onEndReachedThreshold={0.4}
    onEndReached={()=>{void loadMore()}}
    renderItem={({item})=><ContactRow contact={item} onPress={()=>router.push(`/contacts/${item.id}` as never)}/>}
-   ListFooterComponent={hasMore?<Loading/>:null}
+   ListFooterComponent={error&&contacts.length?<Btn label={t('retry')} variant="ghost" style={{marginTop:12}} onPress={()=>void refresh()}/>:hasMore?<Loading/>:null}
    ListEmptyComponent={<Empty>{q||tagId?t('noMatches'):t('noPeople')}</Empty>}/>}
  </View>;
 }

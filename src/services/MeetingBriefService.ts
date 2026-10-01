@@ -65,9 +65,12 @@ export const MeetingBriefService={
   const meetings=await MeetingBriefService.upcoming();
   let scheduled=0;
   for(const meeting of meetings){
-   const lead=meeting.contacts[0];
+   // A briefing fires from the OS whether the vault is open or not, so private names never go in.
+   const visible=meeting.contacts.filter(c=>!c.private);
+   if(!visible.length)continue;
+   const lead=visible[0];
    const name=lead.display_name||lead.first_name;
-   if(await NotificationService.scheduleBrief(meeting.id,meeting.contacts.length>1?`${name} +${meeting.contacts.length-1}`:name,meeting.startsAt))scheduled++;
+   if(await NotificationService.scheduleBrief(meeting.id,visible.length>1?`${name} +${visible.length-1}`:name,meeting.startsAt))scheduled++;
   }
   return scheduled;
  },

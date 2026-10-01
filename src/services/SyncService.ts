@@ -6,6 +6,7 @@ import {useAppStore} from '@/stores/useAppStore';
 import {BackupService} from '@/services/BackupService';
 import {SnapshotService} from '@/services/SnapshotService';
 import {RecoveryKeyService} from '@/services/RecoveryKeyService';
+import {ReminderPlanner} from '@/services/ReminderPlanner';
 
 /**
  * Device-to-device sync without a server: a full snapshot, sealed with the recovery key both
@@ -36,6 +37,7 @@ export const SyncService={
   if(!contents)return null;
   const snapshot=await BackupService.readEnvelope(contents,secret);
   const result=await SnapshotService.merge(snapshot);
+  await ReminderPlanner.reconcile();
   await SyncState.set('last_sync_at',String(Date.now()));
   return result;
  },

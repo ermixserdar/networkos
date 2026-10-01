@@ -4,6 +4,7 @@ import {EnvelopeFile} from '@/services/EnvelopeFile';
 import {translate} from '@/i18n';
 import {useAppStore} from '@/stores/useAppStore';
 import {RecoveryKeyService} from '@/services/RecoveryKeyService';
+import {ReminderPlanner} from '@/services/ReminderPlanner';
 import {Snapshot,SnapshotService,BACKUP_TABLES} from '@/services/SnapshotService';
 import type {SnapshotTable} from '@/services/SnapshotService';
 
@@ -73,6 +74,10 @@ export const BackupService={
   const contents=await EnvelopeFile.pick();
   if(!contents)return null;
   const snapshot=await BackupService.readEnvelope(contents,secret);
-  return SnapshotService.merge(snapshot);
+  const result=await SnapshotService.merge(snapshot);
+  // Restored follow-ups and birthdays with no schedule are silent misses; a deleted contact's
+  // reminder with no cancellation is a stale ping. Reconcile covers both.
+  await ReminderPlanner.reconcile();
+  return result;
  },
 };

@@ -2,7 +2,6 @@ import {getDatabase} from '@/database/database';
 import {translate} from '@/i18n';
 import {useAppStore} from '@/stores/useAppStore';
 import {nextAnniversary} from '@/utils/format';
-import {VaultService} from '@/services/VaultService';
 import {NotificationService} from './NotificationService';
 
 /**
@@ -37,9 +36,11 @@ export function selectReminders(sources:ReminderSource[],now:number,budget=REMIN
 
 async function sources():Promise<ReminderSource[]>{
  const d=await getDatabase();
+ // Private contacts are never scheduled, locked or not: a notification outlives the session and
+ // would carry the name onto the lock screen after the vault re-locks on background.
  const rows=await d.getAllAsync<{id:string;display_name:string|null;first_name:string;last_name:string|null;next_follow_up_at:number|null;birthday:number|null}>(
   `SELECT id,display_name,first_name,last_name,next_follow_up_at,birthday FROM contacts
-   WHERE deleted_at IS NULL${VaultService.clause('contacts')} AND (next_follow_up_at IS NOT NULL OR birthday IS NOT NULL)`);
+   WHERE deleted_at IS NULL AND private=0 AND (next_follow_up_at IS NOT NULL OR birthday IS NOT NULL)`);
  return rows.map(row=>({
   contactId:row.id,
   name:row.display_name||`${row.first_name} ${row.last_name??''}`.trim(),

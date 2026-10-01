@@ -3,6 +3,7 @@ import {Alert,Text,View} from 'react-native';
 import {useRouter} from 'expo-router';
 import {Contact} from '@/types';
 import {ContactRepository} from '@/repositories/ContactRepository';
+import {ReminderPlanner} from '@/services/ReminderPlanner';
 import {contactName} from '@/components/ContactRow';
 import {Avatar} from '@/components/Avatar';
 import {BackLink,Btn,Card,Empty,ScreenScroll,Subtitle,Title,useFocusRefresh} from '@/components/ui';
@@ -20,10 +21,10 @@ export default function Trash(){
  const load=useCallback(async()=>{setPeople(await ContactRepository.list({deleted:true,limit:200}))},[]);
  useFocusRefresh(load);
 
- const restore=async(contact:Contact)=>{await ContactRepository.restore(contact.id);await load();Alert.alert(t('restored'))};
+ const restore=async(contact:Contact)=>{await ContactRepository.restore(contact.id);await ReminderPlanner.reconcile();await load();Alert.alert(t('restored'))};
  const purge=(contact:Contact)=>Alert.alert(t('deleteForeverConfirm'),t('deleteForeverBody'),[
   {text:t('cancel'),style:'cancel'},
-  {text:t('deleteForever'),style:'destructive',onPress:async()=>{await ContactRepository.purge(contact.id);await load()}},
+  {text:t('deleteForever'),style:'destructive',onPress:async()=>{await ContactRepository.purge(contact.id);await ReminderPlanner.reconcile();await load()}},
  ]);
 
  return <ScreenScroll>

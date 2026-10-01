@@ -66,6 +66,8 @@ export const ContactRepository={
  },
  /** Callers compute the next occurrence themselves so 29 Feb is clamped consistently. */
  withBirthday:async()=>{const d=await getDatabase();return d.getAllAsync<Contact>(`${SELECT} WHERE c.deleted_at IS NULL AND c.birthday IS NOT NULL${VaultService.clause()}`);},
+ /** The raw material for meet-anniversaries; dated in the future means a typo, not a milestone. */
+ withMetDate:async()=>{const d=await getDatabase();return d.getAllAsync<Contact>(`${SELECT} WHERE c.deleted_at IS NULL AND c.met_date IS NOT NULL AND c.met_date<=?${VaultService.clause()}`,Date.now());},
  save:async(data:Partial<Contact>&{first_name:string})=>{
   const d=await getDatabase(),t=now(),id=data.id??uuid();
   const cleanPhone=data.phone?.trim()||null;
@@ -101,12 +103,17 @@ export const ContactRepository={
   const d=await getDatabase();
   await d.runAsync(`UPDATE contacts SET ${keys.map(k=>`${k}=?`).join(',')},updated_at=?,version=version+1,sync_status='local' WHERE id=?`,...(keys.map(k=>fields[k]??null) as (string|number|null)[]),now(),id);
  },
- /** Soft deletes are recoverable, so the trash can put a person back exactly as they were. */
+ /** Soft deletes are recoverable, so the trash puts a person back exactly as they were. */
  restore:async(id:string)=>{const d=await getDatabase(),t=now();await d.withTransactionAsync(async()=>{
   await d.runAsync('UPDATE contacts SET deleted_at=NULL,updated_at=?,version=version+1 WHERE id=?',t,id);
   await d.runAsync('UPDATE interactions SET deleted_at=NULL,updated_at=? WHERE contact_id=? AND deleted_at IS NOT NULL',t,id);
   await d.runAsync('UPDATE commitments SET deleted_at=NULL,updated_at=? WHERE contact_id=? AND deleted_at IS NOT NULL',t,id);
   await d.runAsync('UPDATE contact_tags SET deleted_at=NULL,updated_at=? WHERE contact_id=? AND deleted_at IS NOT NULL',t,id);
+  // Mirrors `remove`, which soft-deletes these too: restoring without them silently amputated
+  // the graph and event links. Edges to people still in the trash stay buried — restoring one
+  // person must not resurrect another's.
+  await d.runAsync('UPDATE relationships SET deleted_at=NULL,updated_at=?,version=version+1 WHERE deleted_at IS NOT NULL AND (contact_a_id=? OR contact_b_id=?) AND NOT EXISTS(SELECT 1 FROM contacts c WHERE c.deleted_at IS NOT NULL AND (c.id=relationships.contact_a_id OR c.id=relationships.contact_b_id))',t,id,id);
+  await d.runAsync('UPDATE event_contacts SET deleted_at=NULL,updated_at=? WHERE contact_id=? AND deleted_at IS NOT NULL',t,id);
  });},
  /** The only place a contact actually leaves the device. Not reversible and not synced back. */
  purge:async(id:string)=>{const d=await getDatabase();await d.withTransactionAsync(async()=>{
