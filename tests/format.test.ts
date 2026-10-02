@@ -10,11 +10,27 @@ describe('date input',()=>{
   expect(toDateInput(value)).toBe('1988-02-29');
   expect(new Date(value).getHours()).toBe(12);
  });
- test('rejects impossible dates instead of rolling them over',()=>{
-  expect(parseDateInput('2023-02-30')).toBeNull();
-  expect(parseDateInput('2023-13-01')).toBeNull();
-  expect(parseDateInput('01/02/2023')).toBeNull();
- });
+  test('rejects impossible dates instead of rolling them over',()=>{
+   expect(parseDateInput('2023-02-30')).toBeNull();
+   expect(parseDateInput('2023-13-01')).toBeNull();
+   expect(parseDateInput('30.02.2023')).toBeNull();
+   expect(parseDateInput('not a date')).toBeNull();
+  });
+  test('reads the day-first formats Turkish keyboards produce',()=>{
+   expect(toDateInput(parseDateInput('01/02/2023'))).toBe('2023-02-01');
+   expect(toDateInput(parseDateInput('9.5.2024'))).toBe('2024-05-09');
+   expect(toDateInput(parseDateInput('09-05-2024'))).toBe('2024-05-09');
+   expect(new Date(parseDateInput('09.05.2024')!).getHours()).toBe(12);
+  });
+  test('understands relative days in both languages',()=>{
+   const noon=new Date();noon.setHours(12,0,0,0);
+   const at=(offset:number)=>{const d=new Date(noon);d.setDate(d.getDate()+offset);return d.getTime()};
+   expect(parseDateInput('today')).toBe(at(0));
+   expect(parseDateInput('Yarın')).toBe(at(1));
+   expect(parseDateInput('bugün')).toBe(at(0));
+   expect(parseDateInput('dün')).toBe(at(-1));
+   expect(parseDateInput('yesterday')).toBe(at(-1));
+  });
 });
 
 describe('anniversaries',()=>{

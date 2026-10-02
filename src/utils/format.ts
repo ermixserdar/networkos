@@ -8,8 +8,19 @@ export const localeOf=(language:Language)=>language==='tr'?'tr-TR':'en-US';
 export function formatDate(value?:number|null,language:Language='en'){return value?new Date(value).toLocaleDateString(localeOf(language),{day:'numeric',month:'long',year:'numeric'}):''}
 export function formatDayMonth(value:number,language:Language='en'){return new Date(value).toLocaleDateString(localeOf(language),{day:'numeric',month:'long'})}
 
-/** `YYYY-MM-DD` in and out, anchored at local noon so timezone shifts never move the day. */
-export function parseDateInput(value:string){const match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());if(!match)return null;const [,y,m,d]=match;const date=new Date(Number(y),Number(m)-1,Number(d),12,0,0,0);if(date.getMonth()!==Number(m)-1||date.getDate()!==Number(d))return null;return date.getTime()}
+/** Accepts `YYYY-MM-DD`, `DD.MM.YYYY`/`DD/MM/YYYY`/`DD-MM-YYYY` and relative words
+ * (`today`, `tomorrow`, `yesterday`, `bugün`, `yarın`, `dün`) — all anchored at local
+ * noon so timezone shifts never move the day. */
+export function parseDateInput(value:string){const raw=value.trim();
+ const iso=/^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+ if(iso){const [,y,m,d]=iso;return noonDate(Number(y),Number(m),Number(d))}
+ const eu=/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(raw);
+ if(eu){const [,d,m,y]=eu;return noonDate(Number(y),Number(m),Number(d))}
+ const relative={'today':0,'tomorrow':1,'yesterday':-1,'bugün':0,'bugun':0,'yarın':1,'yarin':1,'dün':-1,'dun':-1} as const;
+ const offset=relative[raw.toLocaleLowerCase() as keyof typeof relative];
+ if(offset!==undefined){const date=new Date();date.setHours(12,0,0,0);date.setDate(date.getDate()+offset);return date.getTime()}
+ return null}
+function noonDate(y:number,m:number,d:number){const date=new Date(y,m-1,d,12,0,0,0);if(date.getMonth()!==m-1||date.getDate()!==d)return null;return date.getTime()}
 export function toDateInput(value?:number|null){if(!value)return '';const date=new Date(value);const pad=(n:number)=>String(n).padStart(2,'0');return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`}
 
 /** Next occurrence of a birthday, clamped so 29 Feb never lands on 1 March. */

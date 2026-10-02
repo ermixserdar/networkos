@@ -1,4 +1,4 @@
-import {useCallback,useState} from 'react';
+import {useCallback,useRef,useState} from 'react';
 import {Alert,Pressable,ScrollView,Text,View} from 'react-native';
 import {useLocalSearchParams,useRouter} from 'expo-router';
 import {Company} from '@/types';
@@ -7,6 +7,7 @@ import {CompanyRepository} from '@/repositories/CompanyRepository';
 import {ReminderPlanner} from '@/services/ReminderPlanner';
 import {PhotoService} from '@/services/PhotoService';
 import {PHONE_CONTACTS_SOURCE,howWeMetText} from '@/services/ContactsImportService';
+import {companyIdForEmail,countryForPhone,normalizeEmail} from '@/utils/autofill';
 import {Avatar} from '@/components/Avatar';
 import {BackLink,Btn,Chip,Field,Rating,ScreenScroll,SectionLabel,Subtitle,Title,useFocusRefresh} from '@/components/ui';
 import {useTheme} from '@/theme';
@@ -25,16 +26,42 @@ const CADENCES=[30,90,180] as const;
 export default function ContactForm(){
  const {id}=useLocalSearchParams<{id?:string}>();
  const router=useRouter();
- const {t}=useTranslation();
- const {c}=useTheme();
- const [form,setForm]=useState<FormState>(BLANK);
- const [companies,setCompanies]=useState<Company[]>([]);
- const [saving,setSaving]=useState(false);
- const set=<K extends keyof FormState>(key:K)=>(value:FormState[K])=>setForm(current=>({...current,[key]:value}));
+  const {t,language}=useTranslation();
+  const {c}=useTheme();
+  const [form,setForm]=useState<FormState>(BLANK);
+  const [companies,setCompanies]=useState<Company[]>([]);
+  const [saving,setSaving]=useState(false);
+  // Auto-guesses stop the moment the user chooses by hand — they assist, never override.
+  const companyTouched=useRef(false);
+  const autoCompanyId=useRef<string|null>(null);
+  const countryTouched=useRef(false);
+  const set=<K extends keyof FormState>(key:K)=>(value:FormState[K])=>setForm(current=>({...current,[key]:value}));
 
- useFocusRefresh(useCallback(async()=>{
-  setCompanies(await CompanyRepository.list());
-  if(!id)return;
+  /** A work email usually names the employer: pre-select the matching company chip. */
+  const onEmail=(value:string)=>{
+   set('email')(value);
+   if(companyTouched.current)return;
+   const match=companyIdForEmail(value,companies);
+   if(match){autoCompanyId.current=match;set('companyId')(match)}
+   else if(autoCompanyId.current){autoCompanyId.current=null;set('companyId')(undefined)}
+  };
+  const pickCompany=(companyId?:string)=>{companyTouched.current=true;set('companyId')(companyId)};
+
+  /** An international dial code names the country; only fills an empty field. */
+  const onPhone=(value:string)=>{
+   set('phone')(value);
+   if(countryTouched.current||form.country.trim())return;
+   const guess=countryForPhone(value,language);
+   if(guess)set('country')(guess);
+  };
+
+  useFocusRefresh(useCallback(async()=>{
+   setCompanies(await CompanyRepository.list());
+   if(!id){
+    // A new person was usually met today; starting there beats typing the date.
+    setForm(current=>current.metDate?current:{...current,metDate:toDateInput(Date.now())});
+    return;
+   }
   const contact=await ContactRepository.get(id);
   if(!contact)return;
   setForm({
@@ -60,18 +87,38 @@ export default function ContactForm(){
   }catch{Alert.alert(t('photoPermission'))}
  };
 
- const save=async()=>{
-  if(!form.first.trim()){Alert.alert(t('firstNameRequired'));return}
-  const birthday=form.birthday.trim()?parseDateInput(form.birthday):null;
-  const metDate=form.metDate.trim()?parseDateInput(form.metDate):null;
-  if((form.birthday.trim()&&birthday===null)||(form.metDate.trim()&&metDate===null)){Alert.alert(t('invalidDate'));return}
-  setSaving(true);
-  try{
-   const display=[form.first.trim(),form.last.trim()].filter(Boolean).join(' ');
-   await ContactRepository.save({
-    id,first_name:form.first.trim(),last_name:form.last.trim()||null,display_name:display,job_title:form.role.trim()||null,
-    company_id:form.companyId??null,email:form.email.trim()||null,phone:form.phone.trim()||null,
-    city:form.city.trim()||null,country:form.country.trim()||null,linkedin_url:form.linkedin.trim()||null,
+  const save=async()=>{
+   if(!form.first.trim()){Alert.alert(t('firstNameRequired'));return}
+   const birthday=form.birthday.trim()?parseDateInput(form.birthday):null;
+   const metDate=form.metDate.trim()?parseDateInput(form.metDate):null;
+   if((form.birthday.trim()&&birthday===null)||(form.metDate.trim()&&metDate===null)){Alert.alert(t('invalidDate'));return}
+   const email=normalizeEmail(form.email);
+   const phone=form.phone.trim()||null;
+   // Same email or phone usually means a re-typed person, not a new one: offer the
+   // existing profile before a duplicate is born.
+   if(email||phone){
+    const existing=await ContactRepository.findByPhoneOrEmail(phone,email);
+    if(existing&&existing.id!==id){
+     const name=existing.display_name||`${existing.first_name} ${existing.last_name??''}`.trim();
+     Alert.alert(t('duplicateTitle'),t('duplicateBody',name),[
+      {text:t('cancel'),style:'cancel'},
+      {text:t('openPerson'),onPress:()=>router.replace(`/contacts/${existing.id}` as never)},
+      {text:t('saveAnyway'),onPress:()=>void persist(email,phone,birthday,metDate)},
+     ]);
+     return;
+    }
+   }
+   await persist(email,phone,birthday,metDate);
+  };
+
+  const persist=async(email:string|null,phone:string|null,birthday:number|null,metDate:number|null)=>{
+   setSaving(true);
+   try{
+    const display=[form.first.trim(),form.last.trim()].filter(Boolean).join(' ');
+    await ContactRepository.save({
+     id,first_name:form.first.trim(),last_name:form.last.trim()||null,display_name:display,job_title:form.role.trim()||null,
+     company_id:form.companyId??null,email,phone,
+     city:form.city.trim()||null,country:form.country.trim()||null,linkedin_url:form.linkedin.trim()||null,
     birthday,met_at:form.metAt.trim()||null,met_date:metDate,how_we_met:form.howWeMet.trim()===t('importedFromPhone')?PHONE_CONTACTS_SOURCE:form.howWeMet.trim()||null,
     notes:form.notes.trim()||null,relationship_strength:form.strength,importance:form.importance,
     favorite:form.favorite?1:0,cadence_days:form.cadence,photo:form.photo,private:form.isPrivate?1:0,
@@ -103,17 +150,17 @@ export default function ContactForm(){
 
   <Text style={{color:c.muted,fontSize:12,fontWeight:'800',marginBottom:8}}>{t('companyLabel')}</Text>
   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:8,paddingBottom:4}} style={{marginBottom:14}}>
-   <Chip label={t('noCompany')} selected={!form.companyId} onPress={()=>set('companyId')(undefined)}/>
-   {companies.map(company=><Chip key={company.id} label={company.name} selected={form.companyId===company.id} onPress={()=>set('companyId')(company.id)}/>)}
+   <Chip label={t('noCompany')} selected={!form.companyId} onPress={()=>pickCompany(undefined)}/>
+   {companies.map(company=><Chip key={company.id} label={company.name} selected={form.companyId===company.id} onPress={()=>pickCompany(company.id)}/>)}
    <Chip label={t('addCompany')} onPress={()=>router.push('/companies/new' as never)}/>
   </ScrollView>
 
   <SectionLabel>{t('reachSection').toUpperCase()}</SectionLabel>
-  <Field label={t('emailLabel')} value={form.email} onChangeText={set('email')} autoCapitalize="none" keyboardType="email-address"/>
-  <Field label={t('phoneLabel')} value={form.phone} onChangeText={set('phone')} keyboardType="phone-pad"/>
+  <Field label={t('emailLabel')} value={form.email} onChangeText={onEmail} autoCapitalize="none" keyboardType="email-address"/>
+  <Field label={t('phoneLabel')} value={form.phone} onChangeText={onPhone} keyboardType="phone-pad"/>
   <Field label={t('linkedinLabel')} value={form.linkedin} onChangeText={set('linkedin')} autoCapitalize="none" keyboardType="url"/>
   <Field label={t('cityLabel')} value={form.city} onChangeText={set('city')}/>
-  <Field label={t('countryLabel')} value={form.country} onChangeText={set('country')}/>
+  <Field label={t('countryLabel')} value={form.country} onChangeText={value=>{countryTouched.current=true;set('country')(value)}}/>
 
   <SectionLabel>{t('contextFormSection').toUpperCase()}</SectionLabel>
   <Field label={t('birthdayLabel')} hint={t('dateHint')} value={form.birthday} onChangeText={set('birthday')} keyboardType="numbers-and-punctuation" autoCapitalize="none"/>

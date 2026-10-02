@@ -8,7 +8,7 @@ import {ContactRepository} from '@/repositories/ContactRepository';
 import {ContactSelect} from '@/components/ContactSelect';
 import {BackLink,Btn,Card,Chip,Empty,Field,Screen,Subtitle,Title,useFocusRefresh} from '@/components/ui';
 import {HIT,hitSlop,radius,useTheme} from '@/theme';
-import {formatDate,parseDateInput} from '@/utils/format';
+import {formatDate,parseDateInput,toDateInput} from '@/utils/format';
 import {useTranslation} from '@/i18n';
 
 export default function Commitments(){
@@ -37,16 +37,18 @@ export default function Commitments(){
   void ContactRepository.get(initialContact).then(preset=>setContact(current=>current??preset??null));
  },[initialContact]);
 
- const save=async()=>{
-  const timestamp=due.trim()?parseDateInput(due):null;
-  if(!contact||!text.trim()||(due.trim()&&timestamp===null)){Alert.alert(t('promiseRequired'));return}
-  setSaving(true);
-  try{
-   await CommitmentRepository.create(contact.id,text,timestamp,direction);
-   setText('');setDue('');
-   await load();
-  }finally{setSaving(false)}
- };
+  const save=async()=>{
+   const timestamp=due.trim()?parseDateInput(due):null;
+   if(!contact||!text.trim()||(due.trim()&&timestamp===null)){Alert.alert(t('promiseRequired'));return}
+   setSaving(true);
+   try{
+    await CommitmentRepository.create(contact.id,text,timestamp,direction);
+    setText('');setDue('');
+    await load();
+   }finally{setSaving(false)}
+  };
+  // Typing a date is the slowest part of a promise; the three common answers are one tap.
+  const quickDue=[{label:t('dueToday'),days:0},{label:t('dueTomorrow'),days:1},{label:t('dueNextWeek'),days:7}];
 
  return <Screen>
   <BackLink label={t('backMore')} onPress={()=>router.back()}/>
@@ -67,6 +69,9 @@ export default function Commitments(){
    <ContactSelect label={t('choosePersonPrompt')} value={contact} onChange={setContact}/>
    <Field label={t('promiseText')} value={text} onChangeText={setText}/>
    <Field label={t('dueDate')} hint={t('dateHint')} value={due} onChangeText={setDue} keyboardType="numbers-and-punctuation" autoCapitalize="none"/>
+   <View style={{flexDirection:'row',gap:8,marginBottom:12}}>
+    {quickDue.map(option=>{const value=toDateInput(Date.now()+option.days*86400000);return <Chip key={option.label} label={option.label} selected={due===value} onPress={()=>setDue(due===value?'':value)}/>})}
+   </View>
    <Btn label={t('savePromise')} busy={saving} onPress={()=>void save()}/>
   </Card>
 
