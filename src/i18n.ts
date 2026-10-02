@@ -16,7 +16,7 @@ const en={
  // home
  keepTheThread:'Keep the thread.',networkToday:'YOUR NETWORK, TODAY',startWithOne:'Start with one person',
  keepPeopleClose:'Keep the people who matter close enough to act on.',addSomeone:'Add someone you know and build outward from there.',
- openNetwork:'Open network',strongConnections:(n:number)=>`${n} strong connections`,statStrong:'Strong',
+  openNetwork:'Open network',strongConnections:(n:number)=>`${n} strong connections`,statStrong:'Strong',statStrongHint:'Strength 4 or more',
  todaySection:'Today',followUpsCount:(n:number)=>`${n} follow-up${n===1?'':'s'}`,followUpPrefix:'Follow up',
  quietDay:'A quiet day. Your next follow-up will appear here.',recentlyAdded:'Recently added',viewAll:'View all',
  addContact:'Add contact',
@@ -313,7 +313,7 @@ const tr:Record<TranslationKey,Value>={
  keepTheThread:'Bağlantıyı koru.',networkToday:'BUGÜN AĞINIZ',startWithOne:'Bir kişiyle başlayın',
  keepPeopleClose:'Önem verdiğiniz kişileri harekete geçebilecek kadar yakın tutun.',
  addSomeone:'Tanıdığınız birini ekleyin ve ağınızı oradan büyütün.',
- openNetwork:'Ağı aç',strongConnections:(n:number)=>`${n} güçlü bağlantı`,statStrong:'Güçlü',
+  openNetwork:'Ağı aç',strongConnections:(n:number)=>`${n} güçlü bağlantı`,statStrong:'Güçlü',statStrongHint:'Gücü 4 ve üzeri',
  todaySection:'Bugün',followUpsCount:(n:number)=>`${n} takip`,followUpPrefix:'Takip',
  quietDay:'Sakin bir gün. Sonraki takibiniz burada görünecek.',recentlyAdded:'Son eklenenler',viewAll:'Tümünü gör',
  addContact:'Kişi ekle',

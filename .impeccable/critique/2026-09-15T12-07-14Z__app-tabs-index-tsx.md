@@ -10,6 +10,7 @@ target_fingerprint: "sha256:8aff75ca46572694fcedbc37abfcbd84652d7c7eb6db079eac75
 target_path: /Users/serdar/crm_myself/app/(tabs)/index.tsx
 timestamp: 2026-09-15T12-07-14Z
 slug: app-tabs-index-tsx
+closed: true
 ---
 Method: dual-agent (A: design review · B: rendered evidence). Detector: `impeccable detect` not run — HTML/CSS rule engine, not applicable to React Native source (per routing guidance for `ios`). Substituted: WCAG contrast computation over both palettes, touch-target measurement, Dynamic Type scan, and simulator captures.
 

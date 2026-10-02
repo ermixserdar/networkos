@@ -78,7 +78,7 @@ export default function Home(){
    <Text style={{color:c.onSage,fontWeight:'800',fontSize:13}}>{label}</Text>
   </Pressable>;
 
- const stat=(value:number,label:string,onPress:()=>void)=><Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label}: ${value}`} onPress={onPress}
+  const stat=(value:number,label:string,onPress:()=>void,hint?:string)=><Pressable key={label} accessibilityRole="button" accessibilityLabel={`${label}: ${value}`} accessibilityHint={hint} onPress={onPress}
   style={{flex:1,minHeight:HIT+16,backgroundColor:c.card,borderRadius:radius.lg,padding:spacing.md}}>
   <Text style={{fontSize:24,fontWeight:'800',color:c.ink}}>{value}</Text>
   <Text style={{fontSize:12,color:c.muted,marginTop:4}}>{label}</Text>
@@ -151,8 +151,8 @@ export default function Home(){
    </>:null}
 
    {data.total?<View style={{flexDirection:'row',gap:10,marginTop:30}}>
-    {stat(data.total,t('contacts'),()=>router.push('/(tabs)/contacts' as never))}
-    {stat(data.strong,t('statStrong'),()=>router.push('/(tabs)/network' as never))}
+     {stat(data.total,t('contacts'),()=>router.push('/(tabs)/contacts' as never))}
+     {stat(data.strong,t('statStrong'),()=>router.push('/(tabs)/network' as never),t('statStrongHint'))}
    </View>:null}
   </>}
  </ScrollView>;
