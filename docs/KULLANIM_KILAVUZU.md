@@ -72,7 +72,17 @@ Alt kısımda en son eklediğiniz kişiler, en altta ise iki sayaç vardır: **K
 - **Bağlam:** doğum günü, nasıl tanıştık, tanışma yeri, tanışma tarihi, notlar
 - **Yakınlık:** ilişki gücü (1–5), önem (1–5), favori, ritim, **gizli**
 
-Tarih alanlarında biçim **YYYY-AA-GG**'dir (örn. `1990-03-17`). Hatalı tarih girerseniz uygulama uyarır ve kaydetmez.
+Tarih alanlarına **YYYY-AA-GG** (`1990-03-17`) veya **GG.AA.YYYY** (`17.03.1990`) yazabilirsiniz; `bugün`, `yarın`, `dün` kelimeleri de anlaşılır. Hatalı tarih girerseniz uygulama uyarır ve kaydetmez.
+
+Form birçok alanı sizin yerinize doldurur — hepsi öneridir, dokunduğunuz alana bir daha karışılmaz:
+
+- **Panodan doldur** (yeni kişide en üstte): bir imza bloğunu veya kartvizit metnini kopyalayıp bu düğmeye dokunun; ad, e-posta, telefon, LinkedIn, unvan ve şirket boş alanlara yerleşir.
+- **E-posta** yazınca ad-soyad boşsa e-postadan tahmin edilir (`ali.yilmaz@…` → Ali Yılmaz) ve web sitesi o domainde olan şirket otomatik seçilir. Alan adı kayıtlı değilse **"… şirketini oluştur"** çipi tek dokunuşla şirketi kurar.
+- **Telefon** yazınca ülke (`+90…` → Türkiye), sabit hat ise şehir (`0212…` → İstanbul) boş alanlara gelir.
+- **LinkedIn** adresindeki `ad-soyad` kısmı boş adı doldurur.
+- **Şirket** seçince boş şehir/ülke şirketten gelir; **tanışma tarihi** yeni kişide bugünden başlar.
+- Aynı e-posta/telefonla kaydetmeye kalkarsanız uygulama mevcut kişiyi açmayı teklif eder; notların içinde kalmış e-posta/telefon/LinkedIn kaydedilirken boş alanlara taşınır.
+- **Ritim** (30/90/180 gün) seçtiğiniz yeni kişiye ilk takip bugünden başlayarak otomatik kurulur.
 
 ### 5.2. Kişiyi düzenleme ve silme
 
@@ -101,7 +111,7 @@ Bir kişinin sayfasında şunlar bulunur:
 - **Ritim** bölümü: 30 / 90 / 180 günde bir
 - **Doğum günü** kartı: kaç gün kaldığı ve kaç yaşına girdiği
 - **Sözler**: size borçlu olunanlar ve sizin borçlu olduklarınız
-- **Bağlantılar**: bu kişinin ağdaki diğer bağlantıları
+- **Bağlantılar**: bu kişinin ağdaki diğer bağlantıları. Bağlantı eklerken aynı şirketteyseniz tür "iş arkadaşı", aynı soyadı taşıyorsanız "aile" önerilir.
 - **Bağlam** ve **Zaman çizelgesi**
 
 ### 5.5. Arama ve filtreleme
@@ -109,6 +119,14 @@ Bir kişinin sayfasında şunlar bulunur:
 Kişiler sekmesindeki arama kutusu ad, soyad, e-posta, telefon, unvan, şehir, notlar ve şirket içinde arar. Türkçe karakterler normalleştirilir: `sükrü` yazarak `Şükrü` bulunur.
 
 Arama kutusunun altındaki etiket şeritinden bir etikete dokunarak listeyi daraltabilirsiniz.
+
+### 5.6. Etkileşim kaydetme
+
+Kişi profilindeki **Zaman çizelgesi** başlığının yanındaki **+** düğmesi etkileşim formunu açar:
+
+- Tür çipleri (görüşme, telefon, kahve…) ve tarih bugünden başlar; **Dün / Bugün** çipleri tek dokunuşla değiştirir.
+- Açıklamaya "dün konuştuk" yazarsanız tarih düne çekilir (geleceğe dair kelimeler görmezden gelinir, çünkü bu alan geçmişi kaydeder).
+- Kaydettiğinizde kişide ritim tanımlıysa bir sonraki takip kendiliğinden planlanır.
 
 ## 6. Ağ (ilişki grafiği)
 
@@ -193,9 +211,9 @@ Ağ sekmesindeki kıvılcım simgesiyle aynı ekran. Ayrıntılar için §6.3'e 
 
 ### 8.6. Etkinlik modu
 
-1. **Etkinlik adı**, tarih (YYYY-AA-GG) ve konum girin.
+1. **Etkinlik adı**, tarih (YYYY-AA-GG veya GG.AA.YYYY; `yarın` da olur) ve konum girin.
 2. **Etkinlik oluştur** düğmesine dokunun.
-3. Açılan etkinlik sayfasında katılımcıları işaretleyin.
+3. Açılan etkinlik sayfasında katılımcıları işaretleyin. Listede olmayan biri varsa **Bu etkinlikten yeni kişi ekle** düğmesi formu nerede/ne zaman tanışıldığı doldurulmuş açar; kaydedince kişi otomatik katılımcı olur.
 4. **Buradaki herkesi bağla** düğmesi, işaretlediğiniz her kişi arasında "etkinlikte tanıştık" bağlantısı kurar.
 
 Böylece bir konferans, ağ grafiğinizde gerçek bir kümeye dönüşür.
@@ -205,7 +223,7 @@ Böylece bir konferans, ağ grafiğinizde gerçek bir kümeye dönüşür.
 Verdiğiniz ve size verilen sözleri takip edin:
 
 1. **Ben borçluyum** veya **Bana söz verildi** seçin.
-2. Kişiyi seçin, sözü yazın, isterseniz son tarih verin.
+2. Kişiyi seçin, sözü yazın, isterseniz son tarih verin. "Yarın gönder", "haftaya ara", "cuma konuşalım" gibi cümlelerde tarih kendiliğinden dolar; **Bugün / Yarın / Gelecek hafta** çipleri de tek dokunuşla seçilir.
 3. **Sözü kaydet** düğmesine dokunun.
 
 Ekranın üstündeki **Karşılıklılık** kartı dengeyi gösterir: kaç söz borcunuz var, kaç söz size verilmiş. Aynı denge her kişinin profilinde de görünür.
