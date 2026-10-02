@@ -5,11 +5,12 @@ import * as Clipboard from 'expo-clipboard';
 import {Company} from '@/types';
 import {ContactRepository} from '@/repositories/ContactRepository';
 import {CompanyRepository} from '@/repositories/CompanyRepository';
+import {EventRepository} from '@/repositories/EventRepository';
 import {FollowUpService} from '@/services/FollowUpService';
 import {ReminderPlanner} from '@/services/ReminderPlanner';
 import {PhotoService} from '@/services/PhotoService';
 import {PHONE_CONTACTS_SOURCE,howWeMetText} from '@/services/ContactsImportService';
-import {companyIdForEmail,companyNameFromWebsite,countryForPhone,emailDomain,nameFromEmail,nameFromSlug,normalizeEmail,parseContactBlock} from '@/utils/autofill';
+import {cityForPhone,companyIdForEmail,companyNameFromWebsite,countryForPhone,emailDomain,nameFromEmail,nameFromSlug,normalizeEmail,parseContactBlock} from '@/utils/autofill';
 import {useAppStore} from '@/stores/useAppStore';
 import {Avatar} from '@/components/Avatar';
 import {BackLink,Btn,Chip,Field,Rating,ScreenScroll,SectionLabel,Subtitle,Title,useFocusRefresh} from '@/components/ui';
@@ -27,7 +28,7 @@ const CADENCES=[30,90,180] as const;
 
 /** One screen for both creating and editing — the app previously had no way to edit at all. */
 export default function ContactForm(){
- const {id}=useLocalSearchParams<{id?:string}>();
+ const {id,eventId}=useLocalSearchParams<{id?:string;eventId?:string}>();
  const router=useRouter();
   const {t,language}=useTranslation();
   const {c}=useTheme();
@@ -38,6 +39,8 @@ export default function ContactForm(){
   const companyTouched=useRef(false);
   const autoCompanyId=useRef<string|null>(null);
   const countryTouched=useRef(false);
+  const cityTouched=useRef(false);
+  const eventPrefilled=useRef(false);
   const showToast=useAppStore(s=>s.showToast);
   const set=<K extends keyof FormState>(key:K)=>(value:FormState[K])=>setForm(current=>({...current,[key]:value}));
 
@@ -110,12 +113,17 @@ export default function ContactForm(){
    showToast({message:t('pasteFilled',[...new Set(filled)].join(', '))});
   };
 
-  /** An international dial code names the country; only fills an empty field. */
+  /** An international dial code names the country, a landline the city — both only when empty. */
   const onPhone=(value:string)=>{
    set('phone')(value);
-   if(countryTouched.current||form.country.trim())return;
-   const guess=countryForPhone(value,language);
-   if(guess)set('country')(guess);
+   if(!countryTouched.current&&!form.country.trim()){
+    const guess=countryForPhone(value,language);
+    if(guess)set('country')(guess);
+   }
+   if(!cityTouched.current&&!form.city.trim()){
+    const city=cityForPhone(value);
+    if(city)set('city')(city);
+   }
   };
 
   useFocusRefresh(useCallback(async()=>{
@@ -123,6 +131,17 @@ export default function ContactForm(){
    if(!id){
     // A new person was usually met today; starting there beats typing the date.
     setForm(current=>current.metDate?current:{...current,metDate:toDateInput(Date.now())});
+    // Arriving from an event means the where and when are already known.
+    if(eventId&&!eventPrefilled.current){
+     eventPrefilled.current=true;
+     const event=await EventRepository.get(eventId);
+     if(event)setForm(current=>({
+      ...current,
+      metAt:current.metAt||event.location||'',
+      metDate:toDateInput(event.event_at),
+      howWeMet:current.howWeMet||event.name,
+     }));
+    }
     return;
    }
   const contact=await ContactRepository.get(id);
@@ -132,10 +151,10 @@ export default function ContactForm(){
    email:contact.email??'',phone:contact.phone??'',city:contact.city??'',country:contact.country??'',
    linkedin:contact.linkedin_url??'',birthday:toDateInput(contact.birthday),metAt:contact.met_at??'',
    metDate:toDateInput(contact.met_date),howWeMet:howWeMetText(contact.how_we_met,t),notes:contact.notes??'',
-   strength:contact.relationship_strength,importance:contact.importance,favorite:Boolean(contact.favorite),cadence:contact.cadence_days??null,
-   photo:contact.photo??null,isPrivate:Boolean(contact.private),
-  });
- },[id,t]));
+    strength:contact.relationship_strength,importance:contact.importance,favorite:Boolean(contact.favorite),cadence:contact.cadence_days??null,
+    photo:contact.photo??null,isPrivate:Boolean(contact.private),
+   });
+  },[id,eventId,t]));
 
  const choosePhoto=()=>Alert.alert(t('photoLabel'),undefined,[
   {text:t('photoLibrary'),onPress:()=>void applyPhoto(PhotoService.pick())},
@@ -193,6 +212,11 @@ export default function ContactForm(){
     });
     // A rhythm without a first date never starts ticking: book it from today.
     if(!id&&form.cadence)await FollowUpService.set(contactId,Date.now()+form.cadence*86400000);
+    // Met at an event, filed at an event: join the attendee list without a second trip.
+    if(!id&&eventId){
+     const people=await EventRepository.attendees(eventId);
+     await EventRepository.setAttendees(eventId,[...people.map(person=>person.id),contactId]);
+    }
     await ReminderPlanner.reconcile();
     router.back();
   }finally{setSaving(false)}
@@ -235,7 +259,7 @@ export default function ContactForm(){
   <Field label={t('emailLabel')} value={form.email} onChangeText={onEmail} autoCapitalize="none" keyboardType="email-address"/>
   <Field label={t('phoneLabel')} value={form.phone} onChangeText={onPhone} keyboardType="phone-pad"/>
   <Field label={t('linkedinLabel')} value={form.linkedin} onChangeText={onLinkedin} autoCapitalize="none" keyboardType="url"/>
-  <Field label={t('cityLabel')} value={form.city} onChangeText={set('city')}/>
+  <Field label={t('cityLabel')} value={form.city} onChangeText={value=>{cityTouched.current=true;set('city')(value)}}/>
   <Field label={t('countryLabel')} value={form.country} onChangeText={value=>{countryTouched.current=true;set('country')(value)}}/>
 
   <SectionLabel>{t('contextFormSection').toUpperCase()}</SectionLabel>

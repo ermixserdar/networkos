@@ -63,8 +63,9 @@ export default function EventDetail(){
    <Btn label={t('connectAttendees')} busy={busy} disabled={selected.length<2} onPress={()=>void connectEveryone()} style={{marginTop:12}}/>
   </Card>
 
-  <SectionLabel style={{marginTop:24}}>{t('addPeopleToEvent').toUpperCase()}</SectionLabel>
-  <Field label={t('search')} value={query} onChangeText={setQuery}/>
+   <SectionLabel style={{marginTop:24}}>{t('addPeopleToEvent').toUpperCase()}</SectionLabel>
+   <Btn label={t('addPersonAtEvent')} variant="outline" icon="add" onPress={()=>router.push(`/contacts/form?eventId=${id}` as never)} style={{marginBottom:12}}/>
+   <Field label={t('search')} value={query} onChangeText={setQuery}/>
   {contacts.length?contacts.map(contact=><Checkbox key={contact.id} checked={selected.includes(contact.id)} label={contactName(contact)}
    sublabel={[contact.job_title,contact.company_name].filter(Boolean).join(' · ')||undefined} onPress={()=>void toggle(contact.id)}/>)
    :<Text style={{color:c.muted}}>{t('eventPeopleEmpty')}</Text>}

@@ -1,6 +1,6 @@
 jest.mock('expo-crypto',()=>({randomUUID:()=>'test'}));
 
-import {companyIdForEmail,companyNameFromWebsite,countryForPhone,emailDomain,hostOf,nameFromEmail,nameFromSlug,normalizeEmail,parseContactBlock,suggestRelationshipType} from '../src/utils/autofill';
+import {cityForPhone,companyIdForEmail,companyNameFromWebsite,countryForPhone,emailDomain,extractDueDate,hostOf,nameFromEmail,nameFromSlug,normalizeEmail,parseContactBlock,suggestRelationshipType} from '../src/utils/autofill';
 
 const companies=[
  {id:'acme',website:'https://www.acme.com/about'},
@@ -78,8 +78,7 @@ describe('name guesses',()=>{
  });
 });
 
-describe('signature block parsing',()=>{
- const block=`Ali Yilmaz
+describe('signature block parsing',()=>{ const block=`Ali Yilmaz
 Product Manager at Acme
 ali.yilmaz@acme.com
 +90 532 111 22 33
@@ -97,5 +96,43 @@ https://linkedin.com/in/ali-yilmaz-5b1a2c`;
  });
  test('empty text guesses nothing',()=>{
   expect(parseContactBlock('   ')).toEqual({});
+ });
+});
+
+describe('due dates from free text',()=>{
+ // 15 May 2024 is a Wednesday.
+ const NOW=new Date(2024,4,15,12,0,0,0).getTime();
+ const noon=(offset:number)=>{const d=new Date(NOW);d.setHours(12,0,0,0);d.setDate(d.getDate()+offset);return d.getTime()};
+ test('understands relative days in both languages',()=>{
+  expect(extractDueDate('Yarın gönder',NOW)).toBe(noon(1));
+  expect(extractDueDate('bugün ara',NOW)).toBe(noon(0));
+  expect(extractDueDate('haftaya bakalım',NOW)).toBe(noon(7));
+  expect(extractDueDate('send in 3 days',NOW)).toBe(noon(3));
+  expect(extractDueDate('2 hafta sonra',NOW)).toBe(noon(14));
+  expect(extractDueDate('öbür gün uğra',NOW)).toBe(noon(2));
+ });
+ test('resolves weekdays to their next occurrence',()=>{
+  expect(new Date(extractDueDate('cuma konuşalım',NOW)!).getDay()).toBe(5);
+  expect(extractDueDate('cuma konuşalım',NOW)).toBe(noon(2));
+  // Same weekday as today means next week, not today.
+  expect(extractDueDate('çarşamba',NOW)).toBe(noon(7));
+ });
+ test('pazartesi is Monday, never a false Sunday',()=>{
+  expect(new Date(extractDueDate('pazartesi ara',NOW)!).getDay()).toBe(1);
+ });
+ test('plain text yields nothing',()=>{
+  expect(extractDueDate('sadece bir not',NOW)).toBeNull();
+  expect(extractDueDate('',NOW)).toBeNull();
+ });
+});
+
+describe('area code to city',()=>{
+ test('maps fixed lines while mobiles roam free',()=>{
+  expect(cityForPhone('0212 123 45 67')).toBe('İstanbul');
+  expect(cityForPhone('0312 123 45 67')).toBe('Ankara');
+  expect(cityForPhone('0232 123 45 67')).toBe('İzmir');
+  expect(cityForPhone('0532 111 22 33')).toBeNull();
+  expect(cityForPhone('+90 212 123 45 67')).toBeNull();
+  expect(cityForPhone('0999 123 45 67')).toBeNull();
  });
 });

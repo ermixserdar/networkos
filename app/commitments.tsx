@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import {Alert,FlatList,Pressable,Text,View} from 'react-native';
 import {useLocalSearchParams,useRouter} from 'expo-router';
 import {Ionicons} from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import {ContactSelect} from '@/components/ContactSelect';
 import {BackLink,Btn,Card,Chip,Empty,Field,Screen,Subtitle,Title,useFocusRefresh} from '@/components/ui';
 import {HIT,hitSlop,radius,useTheme} from '@/theme';
 import {formatDate,parseDateInput,toDateInput} from '@/utils/format';
+import {extractDueDate} from '@/utils/autofill';
 import {useTranslation} from '@/i18n';
 
 export default function Commitments(){
@@ -22,8 +23,10 @@ export default function Commitments(){
  const [text,setText]=useState('');
  const [due,setDue]=useState('');
  const [direction,setDirection]=useState<CommitmentDirection>('owed_by_me');
- const [filter,setFilter]=useState<CommitmentDirection|undefined>();
- const [saving,setSaving]=useState(false);
+  const [filter,setFilter]=useState<CommitmentDirection|undefined>();
+  const [saving,setSaving]=useState(false);
+  // A hand-picked date wins; the text guess only fills an untouched field.
+  const dueTouched=useRef(false);
 
  const load=useCallback(async()=>{
   const [rows,totals]=await Promise.all([CommitmentRepository.list({direction:filter}),CommitmentRepository.balance()]);
@@ -43,12 +46,23 @@ export default function Commitments(){
    setSaving(true);
    try{
     await CommitmentRepository.create(contact.id,text,timestamp,direction);
-    setText('');setDue('');
+    setText('');setDue('');dueTouched.current=false;
     await load();
    }finally{setSaving(false)}
   };
-  // Typing a date is the slowest part of a promise; the three common answers are one tap.
-  const quickDue=[{label:t('dueToday'),days:0},{label:t('dueTomorrow'),days:1},{label:t('dueNextWeek'),days:7}];
+  // "Yarın gönder" already names the deadline — lift it into the date field.
+  const onText=(value:string)=>{
+   setText(value);
+   if(dueTouched.current||due.trim())return;
+   const hint=extractDueDate(value);
+   if(hint)setDue(toDateInput(hint));
+  };
+  const onDue=(value:string)=>{dueTouched.current=true;setDue(value)};
+  const pickDue=(days:number)=>{
+   dueTouched.current=true;
+   const value=toDateInput(Date.now()+days*86400000);
+   setDue(due===value?'':value);
+  };
 
  return <Screen>
   <BackLink label={t('backMore')} onPress={()=>router.back()}/>
@@ -67,10 +81,10 @@ export default function Commitments(){
     <Chip label={t('owedToMe')} selected={direction==='owed_to_me'} onPress={()=>setDirection('owed_to_me')}/>
    </View>
    <ContactSelect label={t('choosePersonPrompt')} value={contact} onChange={setContact}/>
-   <Field label={t('promiseText')} value={text} onChangeText={setText}/>
-   <Field label={t('dueDate')} hint={t('dateHint')} value={due} onChangeText={setDue} keyboardType="numbers-and-punctuation" autoCapitalize="none"/>
+   <Field label={t('promiseText')} value={text} onChangeText={onText}/>
+   <Field label={t('dueDate')} hint={t('dateHint')} value={due} onChangeText={onDue} keyboardType="numbers-and-punctuation" autoCapitalize="none"/>
    <View style={{flexDirection:'row',gap:8,marginBottom:12}}>
-    {quickDue.map(option=>{const value=toDateInput(Date.now()+option.days*86400000);return <Chip key={option.label} label={option.label} selected={due===value} onPress={()=>setDue(due===value?'':value)}/>})}
+    {[{label:t('dueToday'),days:0},{label:t('dueTomorrow'),days:1},{label:t('dueNextWeek'),days:7}].map(option=>{const value=toDateInput(Date.now()+option.days*86400000);return <Chip key={option.label} label={option.label} selected={due===value} onPress={()=>pickDue(option.days)}/>})}
    </View>
    <Btn label={t('savePromise')} busy={saving} onPress={()=>void save()}/>
   </Card>

@@ -59,6 +59,7 @@ const en={
   openPerson:'Open person',saveAnyway:'Save anyway',
   pasteFill:'Fill from clipboard',pasteNothing:'No contact details on the clipboard',
   pasteFilled:(fields:string)=>`Filled in: ${fields}`,createCompany:(domain:string)=>`Create ${domain} as a company`,
+  addPersonAtEvent:'Add someone new from this event',
  basicsSection:'Basics',reachSection:'How to reach them',contextFormSection:'Context',ratingSection:'How close are you?',
  // interactions
  addInteraction:'Add interaction',interactionSubtitle:'Capture enough to make the next conversation easier.',
@@ -354,6 +355,7 @@ const tr:Record<TranslationKey,Value>={
   openPerson:'Kişiyi aç',saveAnyway:'Yine de kaydet',
   pasteFill:'Panodan doldur',pasteNothing:'Panoda kişi bilgisi yok',
   pasteFilled:(fields:string)=>`Doldurulanlar: ${fields}`,createCompany:(domain:string)=>`${domain} şirketini oluştur`,
+  addPersonAtEvent:'Bu etkinlikten yeni kişi ekle',
  basicsSection:'Temel bilgiler',reachSection:'Nasıl ulaşılır',contextFormSection:'Bağlam',ratingSection:'Ne kadar yakınsınız?',
  addInteraction:'Etkileşim ekle',interactionSubtitle:'Bir sonraki konuşmayı kolaylaştıracak kadarını kaydedin.',
  typeLabel:'TÜR',titleLabel:'Başlık',whatRemember:'Neyi hatırlamalısınız?',saveInteraction:'Etkileşimi kaydet',

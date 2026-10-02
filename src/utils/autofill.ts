@@ -57,6 +57,62 @@ const CALLING_COUNTRY:Record<string,{en:string;tr:string}>={
  '971':{en:'United Arab Emirates',tr:'Birleşik Arap Emirlikleri'},
 };
 
+const AREA_CITY:Record<string,string>={
+ '212':'İstanbul','216':'İstanbul','312':'Ankara','232':'İzmir','224':'Bursa',
+ '322':'Adana','242':'Antalya','352':'Kayseri','412':'Diyarbakır','442':'Erzurum',
+ '462':'Trabzon','332':'Konya',
+};
+
+/**
+ * Fixed-line area code to city (`0212…` → İstanbul). Mobile `05xx` numbers
+ * roam, so they never guess a city; unknown codes return `null`.
+ */
+export function cityForPhone(phone?:string|null):string|null{
+ const digits=phone?.replace(/\D/g,'')??'';
+ if(!/^0\d{10}$/.test(digits)||digits[1]==='5')return null;
+ return AREA_CITY[digits.slice(1,4)]??null;
+}
+
+const WEEKDAYS:Record<string,number>={
+ 'pazar':0,'sunday':0,'sun':0,'paz':0,
+ 'pazartesi':1,'monday':1,'mon':1,'pzt':1,'ptesi':1,
+ 'salı':2,'sali':2,'tuesday':2,'tue':2,'tues':2,'sal':2,
+ 'çarşamba':3,'carsamba':3,'wednesday':3,'wed':3,'çar':3,'car':3,
+ 'perşembe':4,'persembe':4,'thursday':4,'thu':4,'thur':4,'thurs':4,'per':4,
+ 'cuma':5,'friday':5,'fri':5,'cum':5,
+ 'cumartesi':6,'saturday':6,'sat':6,'cmt':6,'cmtesi':6,
+};
+
+/** Letter-boundary match — `\b` breaks on Turkish characters, this does not. */
+function hasWord(haystack:string,word:string){
+ return new RegExp(`(^|[^\\p{L}])${word}([^\\p{L}]|$)`, 'u').test(haystack);
+}
+
+/**
+ * Reads a due date out of free text: `yarın`, `haftaya`, `3 gün sonra`,
+ * `in 2 weeks`, weekday names (next occurrence). Anything unrecognised is `null`,
+ * and callers only use a hit for an empty date field.
+ */
+export function extractDueDate(text:string,now=Date.now()):number|null{
+ const lower=text.toLowerCase();
+ const noon=(offsetDays:number)=>{const date=new Date(now);date.setHours(12,0,0,0);date.setDate(date.getDate()+offsetDays);return date.getTime()};
+ if(hasWord(lower,'bugün')||hasWord(lower,'bugun')||hasWord(lower,'today'))return noon(0);
+ if(hasWord(lower,'yarın')||hasWord(lower,'yarin')||hasWord(lower,'tomorrow'))return noon(1);
+ if(lower.includes('öbür gün')||lower.includes('obur gun')||lower.includes('day after tomorrow'))return noon(2);
+ if(hasWord(lower,'haftaya')||lower.includes('gelecek hafta')||lower.includes('next week'))return noon(7);
+ const days=lower.match(/(\d+)\s*g[üu]n\s*sonra/)||lower.match(/in\s*(\d+)\s*days?/);
+ if(days)return noon(parseInt(days[1],10));
+ const weeks=lower.match(/(\d+)\s*hafta\s*sonra/)||lower.match(/in\s*(\d+)\s*weeks?/);
+ if(weeks)return noon(parseInt(weeks[1],10)*7);
+ for(const [name,day] of Object.entries(WEEKDAYS)){
+  if(hasWord(lower,name)){
+   const delta=(day-new Date(now).getDay()+7)%7||7;
+   return noon(delta);
+  }
+ }
+ return null;
+}
+
 /**
  * Country guess from an international prefix (`+90…`, `0044…`) or the national
  * trunk-zero format the app already normalises (`0532…` → Türkiye). Unknown
