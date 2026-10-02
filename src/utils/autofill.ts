@@ -91,3 +91,80 @@ export function suggestRelationshipType(
  if(lastA&&lastB&&lastA===lastB)return 'family';
  return null;
 }
+
+const EMAIL_RE=/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/;
+const LINKEDIN_RE=/linkedin\.com\/in\/([\w-]+)/i;
+const PHONE_RE=/\+?[\d()][\d\s().-]{6,}[\d)]/g;
+
+export type ContactGuess={first?:string;last?:string;email?:string;phone?:string;linkedin?:string;jobTitle?:string;companyName?:string};
+
+const capitalize=(word:string)=>word?word[0].toUpperCase()+word.slice(1).toLowerCase():word;
+
+/** `ali-yilmaz-5b1a2c` → Ali Yılmaz; id suffixes are dropped. */
+export function nameFromSlug(slug:string):{first:string;last:string}|null{
+ // Hash-like suffixes carry digits; real name parts do not.
+ const tokens=slug.split('-').filter(t=>t.length>=2&&!/\d/.test(t)).map(capitalize);
+ if(tokens.length<2)return null;
+ return {first:tokens[0],last:tokens[tokens.length-1]};
+}
+
+/** `ali.yilmaz@acme.com` → Ali Yılmaz; single-token or numeric handles give nothing. */
+export function nameFromEmail(email:string):{first:string;last:string}|null{
+ const local=email.split('@')[0]??'';
+ const tokens=local.split(/[._\-+]+/).map(t=>t.replace(/[^a-zA-ZçÇğĞıİöÖşŞüÜ]/g,'')).filter(t=>t.length>=2);
+ if(tokens.length<2)return null;
+ return {first:capitalize(tokens[0]),last:capitalize(tokens[tokens.length-1])};
+}
+
+/** `https://www.acme-group.com` → Acme Group. */
+export function companyNameFromWebsite(website?:string|null):string|null{
+ const host=hostOf(website);
+ if(!host)return null;
+ const name=host.split('.')[0].split(/[-_]+/).map(capitalize).join(' ');
+ return name||null;
+}
+
+/**
+ * Reads a pasted signature block, vCard-ish text or "Title at Company" line and
+ * pulls out whatever looks like a contact field. Only ever fills empty fields —
+ * the caller decides what is missing.
+ */
+export function parseContactBlock(text:string):ContactGuess{
+ const guess:ContactGuess={};
+ const cleaned=text.trim();
+ if(!cleaned)return guess;
+ const email=cleaned.match(EMAIL_RE)?.[0];
+ if(email)guess.email=email;
+ const profile=cleaned.match(LINKEDIN_RE);
+ if(profile){
+  guess.linkedin=`https://linkedin.com/in/${profile[1]}`;
+  const slugName=nameFromSlug(profile[1]);
+  if(slugName){guess.first=slugName.first;guess.last=slugName.last}
+ }
+ const phones=[...cleaned.matchAll(PHONE_RE)]
+  .map(match=>match[0].trim())
+  .filter(phone=>phone.replace(/\D/g,'').length>=10);
+ const phone=phones.find(item=>item.startsWith('+'))??phones[0];
+ if(phone)guess.phone=phone;
+ const lines=cleaned.split('\n').map(line=>line.trim()).filter(Boolean);
+ for(const line of lines){
+  if(/@|linkedin|\d/.test(line))continue;
+  const role=line.match(/^(.+?)\s+(?:at|@|·|\||—|-)\s+(.+)$/);
+  if(role&&role[1].split(/\s+/).length<=5&&role[2].split(/\s+/).length<=4){
+   guess.jobTitle=role[1].trim();guess.companyName=role[2].trim();break;
+  }
+ }
+ if(!guess.first){
+  if(email){
+   const mailName=nameFromEmail(email);
+   if(mailName){guess.first=mailName.first;guess.last=mailName.last}
+  }else{
+   const nameLine=lines.find(line=>/^[\p{L} .'-]+$/u.test(line)&&line.split(/\s+/).length>=2&&line.split(/\s+/).length<=4);
+   if(nameLine){
+    const words=nameLine.split(/\s+/);
+    guess.first=capitalize(words[0]);guess.last=capitalize(words[words.length-1]);
+   }
+  }
+ }
+ return guess;
+}

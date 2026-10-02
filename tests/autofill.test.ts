@@ -1,6 +1,6 @@
 jest.mock('expo-crypto',()=>({randomUUID:()=>'test'}));
 
-import {companyIdForEmail,countryForPhone,emailDomain,hostOf,normalizeEmail,suggestRelationshipType} from '../src/utils/autofill';
+import {companyIdForEmail,companyNameFromWebsite,countryForPhone,emailDomain,hostOf,nameFromEmail,nameFromSlug,normalizeEmail,parseContactBlock,suggestRelationshipType} from '../src/utils/autofill';
 
 const companies=[
  {id:'acme',website:'https://www.acme.com/about'},
@@ -58,5 +58,44 @@ describe('relationship suggestion',()=>{
  test('no shared signal means no suggestion',()=>{
   expect(suggestRelationshipType(ada,{company_id:null,last_name:'Hopper'})).toBeNull();
   expect(suggestRelationshipType({company_id:null,last_name:null},{company_id:null,last_name:null})).toBeNull();
+ });
+});
+
+describe('name guesses',()=>{
+ test('linkedin slugs drop the id suffix',()=>{
+  expect(nameFromSlug('ali-yilmaz-5b1a2c')).toEqual({first:'Ali',last:'Yilmaz'});
+  expect(nameFromSlug('ali')).toBeNull();
+ });
+ test('email handles split on common separators',()=>{
+  expect(nameFromEmail('ali.yilmaz@acme.com')).toEqual({first:'Ali',last:'Yilmaz'});
+  expect(nameFromEmail('ali_yilmaz@acme.com')).toEqual({first:'Ali',last:'Yilmaz'});
+  expect(nameFromEmail('info@acme.com')).toBeNull();
+  expect(nameFromEmail('a1@acme.com')).toBeNull();
+ });
+ test('websites suggest a company name',()=>{
+  expect(companyNameFromWebsite('https://www.acme-group.com/hakkimizda')).toBe('Acme Group');
+  expect(companyNameFromWebsite('not a host')).toBeNull();
+ });
+});
+
+describe('signature block parsing',()=>{
+ const block=`Ali Yilmaz
+Product Manager at Acme
+ali.yilmaz@acme.com
++90 532 111 22 33
+https://linkedin.com/in/ali-yilmaz-5b1a2c`;
+ test('pulls every field out of a pasted block',()=>{
+  expect(parseContactBlock(block)).toMatchObject({
+   first:'Ali',last:'Yilmaz',
+   jobTitle:'Product Manager',companyName:'Acme',
+   email:'ali.yilmaz@acme.com',phone:'+90 532 111 22 33',
+   linkedin:'https://linkedin.com/in/ali-yilmaz-5b1a2c',
+  });
+ });
+ test('dates in the text are never mistaken for phones',()=>{
+  expect(parseContactBlock('Met on 31.12.2024, call in 2025').phone).toBeUndefined();
+ });
+ test('empty text guesses nothing',()=>{
+  expect(parseContactBlock('   ')).toEqual({});
  });
 });
